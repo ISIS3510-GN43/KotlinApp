@@ -1,7 +1,6 @@
 package com.techsolutions.worqee.repository
 
 import com.techsolutions.worqee.models.Usuario
-import com.techsolutions.worqee.network.LoginRequest
 import com.techsolutions.worqee.network.RetrofitClient
 
 class UsuarioRepository {
@@ -9,7 +8,10 @@ class UsuarioRepository {
     suspend fun login(gmail: String, password: String): Result<Usuario> {
         return try {
             val response = RetrofitClient.apiService.login(
-                LoginRequest(gmail, password)
+                mapOf(
+                    "gmail" to gmail,
+                    "password" to password
+                )
             )
 
             if (response.isSuccessful) {
