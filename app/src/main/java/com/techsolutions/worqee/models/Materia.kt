@@ -1,0 +1,54 @@
+package com.techsolutions.worqee.models
+
+import java.time.LocalDateTime
+
+data class Materia(
+    var id: String = "",
+    var nombre: String = "",
+    var aula: MutableList<String> = mutableListOf(),
+    var dias: MutableList<Dia> = mutableListOf(),
+    var horaInicio: MutableList<Int> = mutableListOf(),
+    var horaFin: MutableList<Int> = mutableListOf(),
+    var color: String = "",
+    var fechaInicio: LocalDateTime = LocalDateTime.now(),
+    var fechaFin: LocalDateTime = LocalDateTime.now(),
+    var notas: MutableList<Nota> = mutableListOf(),
+    var profesor: String = ""
+) {
+    fun toJson(): Map<String, Any?> {
+        return mapOf(
+            "id" to id,
+            "nombre" to nombre,
+            "aula" to aula,
+            "dias" to dias.map { it.toJson() },
+            "horaInicio" to horaInicio,
+            "horaFin" to horaFin,
+            "color" to color,
+            "fechaInicio" to fechaInicio.toString(),
+            "fechaFin" to fechaFin.toString(),
+            "notas" to notas.map { it.toJson() },
+            "profesor" to profesor
+        )
+    }
+
+    companion object {
+        fun fromJson(json: Map<String, Any?>): Materia {
+            return Materia(
+                id = json["id"] as? String ?: "",
+                nombre = json["nombre"] as? String ?: "",
+                aula = ((json["aula"] as? List<*>)?.mapNotNull { it as? String } ?: emptyList()).toMutableList(),
+                dias = ((json["dias"] as? List<*>)?.mapNotNull { it as? String }?.map { Dia.fromJson(it) } ?: emptyList()).toMutableList(),
+                horaInicio = ((json["horaInicio"] as? List<*>)?.mapNotNull { (it as? Number)?.toInt() } ?: emptyList()).toMutableList(),
+                horaFin = ((json["horaFin"] as? List<*>)?.mapNotNull { (it as? Number)?.toInt() } ?: emptyList()).toMutableList(),
+                color = json["color"] as? String ?: "",
+                fechaInicio = (json["fechaInicio"] as? String)?.let { LocalDateTime.parse(it) } ?: LocalDateTime.now(),
+                fechaFin = (json["fechaFin"] as? String)?.let { LocalDateTime.parse(it) } ?: LocalDateTime.now(),
+                notas = ((json["notas"] as? List<*>)?.mapNotNull {
+                    @Suppress("UNCHECKED_CAST")
+                    Nota.fromJson(it as Map<String, Any?>)
+                } ?: emptyList()).toMutableList(),
+                profesor = json["profesor"] as? String ?: ""
+            )
+        }
+    }
+}

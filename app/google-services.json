@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "449944482680",
+    "project_id": "techsolutions-61a2a",
+    "storage_bucket": "techsolutions-61a2a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:449944482680:android:8033860a9d5aa9d72d4e8d",
+        "android_client_info": {
+          "package_name": "com.techsolutions.schedule"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "449944482680-o34r642p3juuttr7502b9bc2u0j4u6ru.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBRBN6rk92dumHebrjKK6fOoKsKGEQ21u0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "449944482680-o34r642p3juuttr7502b9bc2u0j4u6ru.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
