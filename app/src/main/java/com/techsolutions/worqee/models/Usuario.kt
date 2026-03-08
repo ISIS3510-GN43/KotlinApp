@@ -68,16 +68,16 @@ class Usuario(
                 password = map["password"] as? String ?: "",
                 cumpleanios = map["cumpleanios"] as? String ?: "",
                 amigosIds = ((map["amigosIds"] as? List<*>)?.mapNotNull { it as? String }
-                    ?: emptyList()).toMutableList(),
+                    ?: emptyList<String>()).toMutableList(),
                 amigosUsernames = ((map["amigosUsernames"] as? List<*>)?.mapNotNull { it as? String }
-                    ?: emptyList()).toMutableList(),
+                    ?: emptyList<String>()).toMutableList(),
                 horarios = ((map["horarios"] as? List<*>)?.mapNotNull {
                     @Suppress("UNCHECKED_CAST")
                     Horario.fromJson(it as Map<String, Any?>)
-                } ?: emptyList()).toMutableList(),
+                } ?: emptyList<Horario>()).toMutableList(),
                 solicitudes = ((map["solicitudes"] as? List<*>)?.mapNotNull { it as? String }
-                    ?: emptyList()).toMutableList(),
-                eventos = ((map["eventos"] as? List<*>) ?: emptyList()).toMutableList(),
+                    ?: emptyList<String>()).toMutableList(),
+                eventos = ((map["eventos"] as? List<*>) ?: emptyList<Any?>()).toMutableList(),
                 foto = map["foto"] as? String ?: ""
             )
         }
