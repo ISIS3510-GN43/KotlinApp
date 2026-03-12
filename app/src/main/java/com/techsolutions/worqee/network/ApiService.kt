@@ -11,6 +11,11 @@ import retrofit2.http.Path
 
 interface ApiService {
 
+    @GET("usuarios/{userId}")
+        suspend fun getUsuario(
+            @Path("userId") userId: String
+        ): Response<Map<String, Any?>>
+
     @POST("login")
     suspend fun login(
         @Body body: Map<String, String>
