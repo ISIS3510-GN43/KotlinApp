@@ -2,8 +2,9 @@ package com.techsolutions.worqee.repository
 
 import com.techsolutions.worqee.models.Usuario
 import com.techsolutions.worqee.network.RetrofitClient
+import android.util.Log
 
-class UsuarioRepository {
+object UsuarioRepository {
 
     suspend fun login(gmail: String, password: String): Result<Usuario> {
         return try {
@@ -50,22 +51,29 @@ class UsuarioRepository {
         }
     }
 
-    suspend fun getUsuarioById(id: String): Result<Usuario> {
+    suspend fun cargarSingletonUsuario(userId: String): Boolean {
         return try {
-            val response = RetrofitClient.apiService.getUsuarioById(id)
+            val response = RetrofitClient.usuarioApi.getUsuario(userId)
 
             if (response.isSuccessful) {
-                val usuario = response.body()
-                if (usuario != null) {
-                    Result.success(usuario)
+                val data = response.body()
+
+                if (data != null) {
+                    Log.d("UsuarioAPI", "Respuesta: $data")
+                    Usuario.clearInstance()
+                    Usuario.setInstance(Usuario.fromMap(data))
+                    true
                 } else {
-                    Result.failure(Exception("Usuario no encontrado"))
+                    Log.e("UsuarioAPI", "Body vacío")
+                    false
                 }
             } else {
-                Result.failure(Exception("Error HTTP ${response.code()}"))
+                Log.e("UsuarioAPI", "Error al cargar usuario: ${response.code()}")
+                false
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Log.e("UsuarioAPI", "Error en la conexión: ${e.message}", e)
+            false
         }
     }
 }
