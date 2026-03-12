@@ -13,7 +13,8 @@ data class Materia(
     var fechaInicio: LocalDateTime = LocalDateTime.now(),
     var fechaFin: LocalDateTime = LocalDateTime.now(),
     var notas: MutableList<Nota> = mutableListOf(),
-    var profesor: String = ""
+    var profesor: String = "",
+    var objetivo: Double = 0.0
 ) {
     fun toJson(): Map<String, Any?> {
         return mapOf(
@@ -27,7 +28,8 @@ data class Materia(
             "fechaInicio" to fechaInicio.toString(),
             "fechaFin" to fechaFin.toString(),
             "notas" to notas.map { it.toJson() },
-            "profesor" to profesor
+            "profesor" to profesor,
+            "objetivo" to objetivo
         )
     }
 
@@ -47,7 +49,8 @@ data class Materia(
                     @Suppress("UNCHECKED_CAST")
                     Nota.fromJson(it as Map<String, Any?>)
                 } ?: emptyList()).toMutableList(),
-                profesor = json["profesor"] as? String ?: ""
+                profesor = json["profesor"] as? String ?: "",
+                objetivo = (json["objetivo"] as? Number)?.toDouble() ?: 0.0
             )
         }
     }
