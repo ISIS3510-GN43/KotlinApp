@@ -45,7 +45,7 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
     val materia = viewModel.getMateria()
 
     val actividades = remember {
-        mutableStateListOf<Nota>().apply { addAll(viewModel.obtenerActividades()) }
+        mutableStateListOf<Nota>().apply { addAll(materia.notas) }
     }
 
     var nombreActividad by remember { mutableStateOf("") }
@@ -56,8 +56,8 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
         mutableStateOf(if (materia.objetivo > 0) materia.objetivo.toString() else "")
     }
 
-    val promedio = viewModel.calcularPromedio()
-    val progressValue = viewModel.calcularProgreso()
+    val promedio = materia.calcularPromedio()
+    val progressValue = materia.calcularProgreso()
 
     val themeBlue = MaterialTheme.colorScheme.primary
 
@@ -166,7 +166,7 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
                         viewModel.agregarActividad(nombreActividad, gradeValue, weightValue)
 
                         actividades.clear()
-                        actividades.addAll(viewModel.obtenerActividades())
+                        actividades.addAll(materia.notas)
 
                         nombreActividad = ""
                         nota = ""

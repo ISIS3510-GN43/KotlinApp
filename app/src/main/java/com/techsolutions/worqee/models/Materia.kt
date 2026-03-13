@@ -32,6 +32,27 @@ data class Materia(
             "objetivo" to objetivo
         )
     }
+    fun calcularPromedio(): Float {
+
+    if (notas.isEmpty()) return 0f
+
+    var suma = 0f
+
+    notas.forEach {
+        suma += it.grade.toFloat() * (it.porcentaje.toFloat() / 100f)
+    }
+
+    return suma
+    }
+
+    fun calcularProgreso(): Float {
+
+    val promedio = calcularPromedio()
+
+    return if (objetivo > 0) {
+        (promedio / objetivo.toFloat()).coerceIn(0f, 1f)
+    } else 0f
+    }
 
     companion object {
         fun fromJson(json: Map<String, Any?>): Materia {

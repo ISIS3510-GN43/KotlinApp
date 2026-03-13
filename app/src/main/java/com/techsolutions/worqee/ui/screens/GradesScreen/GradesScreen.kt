@@ -67,10 +67,10 @@ fun GradesScreen(viewModel: GradesViewModel) {
 
                 MateriaProgressRow(
                     materia = materia,
-                    progress = viewModel.calcularProgreso(materia),
                     onClick = {
 
                         val intent = Intent(context as Context, SubjectGradesActivity::class.java)
+
                         intent.putExtra("materiaNombre", materia.nombre)
 
                         context.startActivity(intent)
@@ -84,11 +84,12 @@ fun GradesScreen(viewModel: GradesViewModel) {
 @Composable
 fun MateriaProgressRow(
     materia: Materia,
-    progress: Float,
     onClick: () -> Unit
 ) {
 
     val themeBlue = MaterialTheme.colorScheme.primary
+
+    val progress = materia.calcularProgreso()
 
     Card(
         modifier = Modifier
