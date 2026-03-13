@@ -31,8 +31,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.techsolutions.worqee.models.Materia
 import com.techsolutions.worqee.viewmodel.GradesViewModel
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,7 +43,10 @@ fun GradesScreen(viewModel: GradesViewModel) {
 
     val context = LocalContext.current
     val materias by viewModel.materiasState.collectAsState()
-
+    // Refrescar los datos del ViewModel
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.refresh()
+    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -58,20 +64,18 @@ fun GradesScreen(viewModel: GradesViewModel) {
             )
         }
     ) { padding ->
-
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
-
             items(materias) { materia ->
 
                 MateriaProgressRow(
                     materia = materia,
                     onClick = {
 
-                        val intent = Intent(context as Context, SubjectGradesActivity::class.java)
+                        val intent = Intent(context, SubjectGradesActivity::class.java)
                         intent.putExtra("materiaNombre", materia.nombre)
                         context.startActivity(intent)
                     }
@@ -80,17 +84,13 @@ fun GradesScreen(viewModel: GradesViewModel) {
         }
     }
 }
-
 @Composable
 fun MateriaProgressRow(
     materia: Materia,
     onClick: () -> Unit
 ) {
-
     val themeBlue = MaterialTheme.colorScheme.primary
-
     val progress = materia.calcularProgreso()
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -98,36 +98,30 @@ fun MateriaProgressRow(
             .clickable { onClick() },
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
                 Text(
                     text = materia.nombre,
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f)
                 )
-
                 val percentInt = (progress * 100).toInt()
-
                 Text(
                     text = "$percentInt%",
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(start = 12.dp)
                 )
             }
-
             LinearProgressIndicator(
-                progress = progress,
+                progress = { progress },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),
