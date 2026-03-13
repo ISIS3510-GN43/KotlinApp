@@ -28,6 +28,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,12 +43,9 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
 
     val context = LocalContext.current
 
-    val materia = viewModel.getMateria()
+    val materia by viewModel.materiaState.collectAsState()
 
-    val actividades = remember {
-        mutableStateListOf<Nota>().apply { addAll(materia.notas) }
-    }
-
+    
     var nombreActividad by remember { mutableStateOf("") }
     var nota by remember { mutableStateOf("") }
     var porcentaje by remember { mutableStateOf("") }
@@ -103,7 +101,7 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
                 value = objetivo,
                 onValueChange = {
                     objetivo = it
-                    viewModel.actualizarObjetivo(it)
+                    viewModel.actualizarObjetivo(it) 
                 },
                 label = { Text("Target grade") },
                 modifier = Modifier.fillMaxWidth(),
@@ -111,7 +109,7 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
             )
 
             LinearProgressIndicator(
-                progress = { progressValue },
+                progress = progressValue,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),
@@ -164,10 +162,6 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
                     if (gradeValue != null && weightValue != null && nombreActividad.isNotBlank()) {
 
                         viewModel.agregarActividad(nombreActividad, gradeValue, weightValue)
-
-                        actividades.clear()
-                        actividades.addAll(materia.notas)
-
                         nombreActividad = ""
                         nota = ""
                         porcentaje = ""
@@ -193,8 +187,7 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.weight(1f)
             ) {
-
-                items(actividades) { actividad ->
+                items(materia.notas) { actividad: Nota ->
 
                     Card(
                         modifier = Modifier.fillMaxWidth(),

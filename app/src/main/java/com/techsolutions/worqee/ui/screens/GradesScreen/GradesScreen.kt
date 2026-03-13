@@ -25,6 +25,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -37,7 +39,7 @@ import com.techsolutions.worqee.viewmodel.GradesViewModel
 fun GradesScreen(viewModel: GradesViewModel) {
 
     val context = LocalContext.current
-    val materias = viewModel.obtenerMaterias()
+    val materias by viewModel.materiasState.collectAsState()
 
     Scaffold(
         topBar = {
@@ -70,9 +72,7 @@ fun GradesScreen(viewModel: GradesViewModel) {
                     onClick = {
 
                         val intent = Intent(context as Context, SubjectGradesActivity::class.java)
-
                         intent.putExtra("materiaNombre", materia.nombre)
-
                         context.startActivity(intent)
                     }
                 )
@@ -127,7 +127,7 @@ fun MateriaProgressRow(
             }
 
             LinearProgressIndicator(
-                progress = { progress },
+                progress = progress,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),
