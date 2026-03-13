@@ -27,48 +27,40 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.techsolutions.worqee.models.Materia
 import com.techsolutions.worqee.models.Nota
+import com.techsolutions.worqee.viewmodel.SubjectGradesViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SubjectGradesScreen(materia: Materia) {
-    val context = LocalContext.current   
-    val actividades = remember { 
-        mutableStateListOf<Nota>().apply { addAll(materia.notas) } 
+fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
+
+    val context = LocalContext.current
+
+    val materia = viewModel.getMateria()
+
+    val actividades = remember {
+        mutableStateListOf<Nota>().apply { addAll(viewModel.obtenerActividades()) }
     }
+
     var nombreActividad by remember { mutableStateOf("") }
     var nota by remember { mutableStateOf("") }
     var porcentaje by remember { mutableStateOf("") }
-    var objetivo by remember { 
-        mutableStateOf(if (materia.objetivo > 0) materia.objetivo.toString() else "") 
+
+    var objetivo by remember {
+        mutableStateOf(if (materia.objetivo > 0) materia.objetivo.toString() else "")
     }
-    val promedio = remember(actividades.size) {
-        if (actividades.isEmpty()) 0f
-        else {
-            var suma = 0f
-            actividades.forEach { 
-                suma += it.grade.toFloat() * (it.porcentaje.toFloat() / 100f)
-            }
-            suma
-        }
-    }
-    val progressValue = remember(objetivo, promedio) {
-        val goalValue = objetivo.toFloatOrNull() ?: 0f
-        if (goalValue > 0) (promedio / goalValue).coerceIn(0f, 1f) else 0f
-    }
+
+    val promedio = viewModel.calcularPromedio()
+    val progressValue = viewModel.calcularProgreso()
+
     val themeBlue = MaterialTheme.colorScheme.primary
+
     val textFieldColors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = themeBlue,
         unfocusedBorderColor = themeBlue,
@@ -78,6 +70,7 @@ fun SubjectGradesScreen(materia: Materia) {
         focusedTextColor = MaterialTheme.colorScheme.onSurface,
         unfocusedTextColor = MaterialTheme.colorScheme.onSurface
     )
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -95,6 +88,7 @@ fun SubjectGradesScreen(materia: Materia) {
             )
         }
     ) { padding ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -102,18 +96,20 @@ fun SubjectGradesScreen(materia: Materia) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+
             Text("Goal")
 
             OutlinedTextField(
                 value = objetivo,
-                onValueChange = { 
+                onValueChange = {
                     objetivo = it
-                    materia.objetivo = it.toDoubleOrNull() ?: 0.0
+                    viewModel.actualizarObjetivo(it)
                 },
                 label = { Text("Target grade") },
                 modifier = Modifier.fillMaxWidth(),
                 colors = textFieldColors
             )
+
             LinearProgressIndicator(
                 progress = { progressValue },
                 modifier = Modifier
@@ -122,12 +118,16 @@ fun SubjectGradesScreen(materia: Materia) {
                 color = themeBlue,
                 trackColor = themeBlue.copy(alpha = 0.2f)
             )
+
             Text("Current Average: %.2f".format(promedio))
+
             Spacer(modifier = Modifier.height(16.dp))
+
             Text(
                 "Add Activity",
                 style = MaterialTheme.typography.titleMedium
             )
+
             OutlinedTextField(
                 value = nombreActividad,
                 onValueChange = { nombreActividad = it },
@@ -135,7 +135,9 @@ fun SubjectGradesScreen(materia: Materia) {
                 modifier = Modifier.fillMaxWidth(),
                 colors = textFieldColors
             )
+
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+
                 OutlinedTextField(
                     value = nota,
                     onValueChange = { nota = it },
@@ -143,6 +145,7 @@ fun SubjectGradesScreen(materia: Materia) {
                     modifier = Modifier.weight(1f),
                     colors = textFieldColors
                 )
+
                 OutlinedTextField(
                     value = porcentaje,
                     onValueChange = { porcentaje = it },
@@ -151,18 +154,20 @@ fun SubjectGradesScreen(materia: Materia) {
                     colors = textFieldColors
                 )
             }
+
             Button(
                 onClick = {
+
                     val gradeValue = nota.toFloatOrNull()
                     val weightValue = porcentaje.toFloatOrNull()
+
                     if (gradeValue != null && weightValue != null && nombreActividad.isNotBlank()) {
-                        val nuevaNota = Nota(
-                            grade = gradeValue.toDouble(),
-                            porcentaje = weightValue.toDouble(),
-                            titulo = nombreActividad
-                        )
-                        actividades.add(nuevaNota)
-                        materia.notas.add(nuevaNota)
+
+                        viewModel.agregarActividad(nombreActividad, gradeValue, weightValue)
+
+                        actividades.clear()
+                        actividades.addAll(viewModel.obtenerActividades())
+
                         nombreActividad = ""
                         nota = ""
                         porcentaje = ""
@@ -176,38 +181,48 @@ fun SubjectGradesScreen(materia: Materia) {
             ) {
                 Text("Add Activity")
             }
+
             Spacer(modifier = Modifier.height(12.dp))
+
             Text(
                 "Activities",
                 style = MaterialTheme.typography.titleMedium
             )
+
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.weight(1f)
             ) {
+
                 items(actividades) { actividad ->
+
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surface
                         )
                     ) {
+
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+
                             Column(modifier = Modifier.weight(1f)) {
+
                                 Text(
                                     actividad.titulo ?: "Activity",
                                     style = MaterialTheme.typography.bodyLarge
                                 )
+
                                 Text(
                                     "Weight: ${actividad.porcentaje}%",
                                     style = MaterialTheme.typography.bodySmall
                                 )
                             }
+
                             Text(
                                 "${actividad.grade}",
                                 style = MaterialTheme.typography.titleMedium

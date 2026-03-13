@@ -25,33 +25,20 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LifecycleEventEffect
 import com.techsolutions.worqee.models.Materia
-import com.techsolutions.worqee.models.Usuario
+import com.techsolutions.worqee.viewmodel.GradesViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GradesScreen() {
-    val context = LocalContext.current  
-    //refrescar la pantalla al volver 
-    var refreshTrigger by remember { mutableIntStateOf(0) }
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-        refreshTrigger++
-    }
-    val usuario = remember(refreshTrigger) { Usuario.getInstance() }
-    val horarioActivo = usuario.horarios.firstOrNull { it.activo }
-        ?: usuario.horarios.firstOrNull()
-    val materias = horarioActivo?.materias ?: emptyList()
+fun GradesScreen(viewModel: GradesViewModel) {
+
+    val context = LocalContext.current
+    val materias = viewModel.obtenerMaterias()
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -69,22 +56,26 @@ fun GradesScreen() {
             )
         }
     ) { padding ->
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
+
             items(materias) { materia ->
-                key(materia.id, materia.notas.size, materia.objetivo) {
-                    MateriaProgressRow(
-                        materia = materia,
-                        onClick = {
-                            val intent = Intent(context as Context, SubjectGradesActivity::class.java)
-                            intent.putExtra("materiaNombre", materia.nombre)
-                            context.startActivity(intent)
-                        }
-                    )
-                }
+
+                MateriaProgressRow(
+                    materia = materia,
+                    progress = viewModel.calcularProgreso(materia),
+                    onClick = {
+
+                        val intent = Intent(context as Context, SubjectGradesActivity::class.java)
+                        intent.putExtra("materiaNombre", materia.nombre)
+
+                        context.startActivity(intent)
+                    }
+                )
             }
         }
     }
@@ -93,20 +84,11 @@ fun GradesScreen() {
 @Composable
 fun MateriaProgressRow(
     materia: Materia,
+    progress: Float,
     onClick: () -> Unit
 ) {
+
     val themeBlue = MaterialTheme.colorScheme.primary
-    val promedio = if (materia.notas.isEmpty()) 0f
-    else {
-        var suma = 0f
-        materia.notas.forEach { 
-            suma += it.grade.toFloat() * (it.porcentaje.toFloat() / 100f)
-        }
-        suma
-    }
-    val progress = if (materia.objetivo > 0) {
-        (promedio / materia.objetivo.toFloat()).coerceIn(0f, 1f)
-    } else 0f
 
     Card(
         modifier = Modifier
@@ -115,16 +97,19 @@ fun MateriaProgressRow(
             .clickable { onClick() },
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+
                 Text(
                     text = materia.nombre,
                     style = MaterialTheme.typography.titleMedium,
@@ -134,7 +119,7 @@ fun MateriaProgressRow(
                 val percentInt = (progress * 100).toInt()
 
                 Text(
-                    text = "${percentInt}%",
+                    text = "$percentInt%",
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(start = 12.dp)
                 )

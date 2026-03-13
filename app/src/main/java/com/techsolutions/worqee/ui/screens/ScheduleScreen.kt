@@ -2,7 +2,7 @@ package com.techsolutions.worqee.ui.screens
 
 import android.content.Intent
 import androidx.compose.ui.platform.LocalContext
-import com.techsolutions.worqee.GradesActivity
+import com.techsolutions.worqee.ui.screens.GradesScreen.GradesActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
