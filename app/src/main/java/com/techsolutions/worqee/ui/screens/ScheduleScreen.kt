@@ -1,5 +1,8 @@
 package com.techsolutions.worqee.ui.screens
 
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
+import com.techsolutions.worqee.ui.screens.GradesScreen.GradesActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -327,6 +330,7 @@ fun LunchBreak() {
 
 @Composable
 fun BottomNavBar() {
+    val context = LocalContext.current
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surface,
         modifier = Modifier.navigationBarsPadding()
@@ -345,7 +349,8 @@ fun BottomNavBar() {
         )
         NavigationBarItem(
             selected = false,
-            onClick = { },
+            onClick = {val intent = Intent(context, GradesActivity::class.java)
+                        context.startActivity(intent)},
             icon = { Icon(Icons.Outlined.School, contentDescription = "Grades") },
             label = { Text("Grades", style = MaterialTheme.typography.labelSmall) }
         )
@@ -355,6 +360,7 @@ fun BottomNavBar() {
             icon = { Icon(Icons.Outlined.AutoStories, contentDescription = "Study") },
             label = { Text("Study", style = MaterialTheme.typography.labelSmall) }
         )
+        
     }
 }
 
