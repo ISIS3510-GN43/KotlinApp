@@ -35,7 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.techsolutions.worqee.models.Nota
-import com.techsolutions.worqee.viewmodel.SubjectGradesViewModel
+import com.techsolutions.worqee.ui.screens.GradesScreen.viewmodel.SubjectGradesViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

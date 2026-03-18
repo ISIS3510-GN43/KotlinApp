@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.techsolutions.worqee.models.Materia
-import com.techsolutions.worqee.viewmodel.GradesViewModel
+import com.techsolutions.worqee.ui.screens.GradesScreen.viewmodel.GradesViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
