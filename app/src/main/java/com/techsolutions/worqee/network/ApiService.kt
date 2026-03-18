@@ -30,4 +30,9 @@ interface ApiService {
     suspend fun getUsuarioById(
         @Path("id") id: String
     ): Response<Usuario>
+
+    @GET("usuarios/{userId}/amigos")
+    suspend fun getAmigos(
+        @Path("userId") userId: String
+    ): Response<List<Map<String, Any?>>>
 }
