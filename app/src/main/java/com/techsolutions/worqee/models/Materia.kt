@@ -55,6 +55,16 @@ data class Materia(
     } else 0f
     }
 
+    fun estáEnRiesgo(): Boolean {
+        val porcentajeAgregado = notas.sumOf { it.porcentaje }
+        val promedio = calcularPromedio()
+        return porcentajeAgregado >= 30 && promedio < 3.0
+    }
+
+    fun obtenerPorcentajeAgregado(): Double {
+        return notas.sumOf { it.porcentaje }
+    }
+
     companion object {
         fun fromJson(json: Map<String, Any?>): Materia {
             return Materia(

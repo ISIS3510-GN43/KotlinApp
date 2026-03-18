@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -42,6 +43,9 @@ import com.techsolutions.worqee.ui.screens.GradesScreen.viewmodel.SubjectGradesV
 fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
     val context = LocalContext.current
     val materia by viewModel.materiaState.collectAsState() 
+    val enRiesgo by viewModel.estáEnRiesgo.collectAsState()
+    val porcentajeAgregado by viewModel.porcentajeAgregado.collectAsState()
+    
     var nombreActividad by remember { mutableStateOf("") }
     var nota by remember { mutableStateOf("") }
     var porcentaje by remember { mutableStateOf("") }
@@ -51,6 +55,7 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
     val promedio = materia.calcularPromedio()
     val progressValue = materia.calcularProgreso()
     val themeBlue = MaterialTheme.colorScheme.primary
+    
     val textFieldColors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = themeBlue,
         unfocusedBorderColor = themeBlue,
@@ -84,6 +89,42 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            if (enRiesgo) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFFFEAEE) // Rojo claro
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Warning,
+                            contentDescription = "Alerta",
+                            tint = Color(0xFFC62828), 
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "⚠ Estás en riesgo",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = Color(0xFFC62828)
+                            )
+                            Text(
+                                "Has completado el ${porcentajeAgregado.toInt()}% de calificaciones pero tu promedio es ${"%.2f".format(promedio)}. ¡Necesitas mejorar!",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFFC62828)
+                            )
+                        }
+                    }
+                }
+            }
+            
             Text("Goal")
             OutlinedTextField(
                 value = objetivo,
