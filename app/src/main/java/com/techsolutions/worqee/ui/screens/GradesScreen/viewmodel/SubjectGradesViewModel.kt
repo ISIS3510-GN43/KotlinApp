@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import com.techsolutions.worqee.models.Materia
 import com.techsolutions.worqee.models.Nota
 import com.techsolutions.worqee.models.Usuario
-import com.techsolutions.worqee.storage.LocalStorageManager
+import com.techsolutions.worqee.repository.UsuarioRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -54,7 +54,7 @@ class SubjectGradesViewModel(
     private fun guardarEnCaché() {
         try {
             val usuario = Usuario.getInstance()
-            LocalStorageManager.guardarUsuario(usuario)
+            UsuarioRepository.guardarEnCaché(usuario)
         } catch (e: Exception) {
             Log.e("SubjectGradesViewModel", "Error guardando en caché: ${e.message}", e)
         }

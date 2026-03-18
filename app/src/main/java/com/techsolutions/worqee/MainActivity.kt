@@ -15,11 +15,14 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Inicializar el LocalStorageManager antes de cualquier operación
         LocalStorageManager.init(applicationContext)
+        
         lifecycleScope.launch {
             if (!Usuario.isInitialized()) {
-                // Primero intentar cargar del caché
-                val usuarioCaché = LocalStorageManager.cargarUsuario()
+                // Primero intentar cargar del caché usando el Repository
+                val usuarioCaché = UsuarioRepository.cargarDelCaché()
                 if (usuarioCaché != null) {
                     Usuario.setInstance(usuarioCaché)
                     Log.d("MainActivity", "Usuario cargado desde caché")
