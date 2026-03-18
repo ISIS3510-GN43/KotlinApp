@@ -1,8 +1,11 @@
 package com.techsolutions.worqee.ui.screens.GradesScreen.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.techsolutions.worqee.models.Materia
 import com.techsolutions.worqee.models.Nota
+import com.techsolutions.worqee.models.Usuario
+import com.techsolutions.worqee.storage.LocalStorageManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,13 +26,27 @@ class SubjectGradesViewModel(
         )
         materia.notas.add(nuevaNota)
         _materiaState.value = materia.copy(notas = materia.notas.toMutableList())
+        guardarEnCaché()
+        Log.d("SubjectGradesViewModel", "Actividad agregada: $nombre - Guardada en caché")
     }
 
     fun actualizarObjetivo(objetivo: String) {
         val objValue = objetivo.toDoubleOrNull() ?: 0.0
         materia.objetivo = objValue
         _materiaState.value = materia.copy(notas = materia.notas.toMutableList())
+        guardarEnCaché()
+        Log.d("SubjectGradesViewModel", "Objetivo actualizado a: $objValue - Guardado en caché")
     }
+
+    private fun guardarEnCaché() {
+        try {
+            val usuario = Usuario.getInstance()
+            LocalStorageManager.guardarUsuario(usuario)
+        } catch (e: Exception) {
+            Log.e("SubjectGradesViewModel", "Error guardando en caché: ${e.message}", e)
+        }
+    }
+
     fun calcularPromedio(): Float = materia.calcularPromedio()
     fun calcularProgreso(): Float = materia.calcularProgreso()
 }
