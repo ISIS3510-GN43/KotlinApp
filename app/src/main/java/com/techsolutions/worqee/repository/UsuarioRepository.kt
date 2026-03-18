@@ -76,4 +76,22 @@ object UsuarioRepository {
             false
         }
     }
+
+    suspend fun getAmigos(userId: String): Result<List<Usuario>> {
+        return try {
+            val response = RetrofitClient.apiService.getAmigos(userId)
+            if (response.isSuccessful) {
+                val lista = response.body()
+                if (lista != null) {
+                    Result.success(lista.map { Usuario.fromMap(it) })
+                } else {
+                    Result.failure(Exception("Lista vacía"))
+                }
+            } else {
+                Result.failure(Exception("Error HTTP ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
