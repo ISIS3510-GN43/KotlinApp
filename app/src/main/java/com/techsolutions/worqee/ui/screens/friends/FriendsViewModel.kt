@@ -21,15 +21,25 @@ class FriendsViewModel : ViewModel() {
     }
 
     private fun loadFriends() {
-        // TODO: reemplazar con datos reales del Repository
-        val allFriends = listOf(
-            FriendUiModel("1", "Sarah Johnson", status = FriendStatus.AVAILABLE),
-            FriendUiModel("2", "Michael Chen", status = FriendStatus.AVAILABLE),
-            FriendUiModel("3", "Emily Davis", status = FriendStatus.BUSY, freeAtLabel = "Free at 2:00 PM"),
-            FriendUiModel("4", "James Wilson", status = FriendStatus.BUSY, freeAtLabel = "Free at 4:30 PM"),
-            FriendUiModel("5", "Laura Smith", status = FriendStatus.OFFLINE)
-        )
-        updateState(allFriends, _uiState.value.searchQuery)
+        viewModelScope.launch {
+            val usuario = Usuario.getInstance()
+            val result = UsuarioRepository.getAmigos(usuario.id)
+
+            if (result.isFailure) return@launch
+
+            val amigos = result.getOrDefault(emptyList())
+
+            val allFriends = amigos.map { amigo ->
+                FriendUiModel(
+                    id = amigo.id,
+                    name = amigo.username,
+                    avatarUrl = amigo.foto,
+                    status = FriendStatus.AVAILABLE // TODO: calcular status real
+                )
+            }
+
+            updateState(allFriends, _uiState.value.searchQuery)
+        }
     }
 
     fun onSearchQueryChanged(query: String) {

@@ -1,6 +1,7 @@
 package com.techsolutions.worqee.models
 
 import java.time.LocalDateTime
+import java.time.ZonedDateTime
 
 data class Materia(
     var id: String = "",
@@ -64,8 +65,12 @@ data class Materia(
                 horaInicio = ((json["horaInicio"] as? List<*>)?.mapNotNull { (it as? Number)?.toInt() } ?: emptyList()).toMutableList(),
                 horaFin = ((json["horaFin"] as? List<*>)?.mapNotNull { (it as? Number)?.toInt() } ?: emptyList()).toMutableList(),
                 color = json["color"] as? String ?: "",
-                fechaInicio = (json["fechaInicio"] as? String)?.let { LocalDateTime.parse(it) } ?: LocalDateTime.now(),
-                fechaFin = (json["fechaFin"] as? String)?.let { LocalDateTime.parse(it) } ?: LocalDateTime.now(),
+                fechaInicio = (json["fechaInicio"] as? String)?.let {
+                    ZonedDateTime.parse(it).toLocalDateTime()
+                } ?: LocalDateTime.now(),
+                fechaFin = (json["fechaFin"] as? String)?.let {
+                    ZonedDateTime.parse(it).toLocalDateTime()
+                } ?: LocalDateTime.now(),
                 notas = ((json["notas"] as? List<*>)?.mapNotNull {
                     @Suppress("UNCHECKED_CAST")
                     Nota.fromJson(it as Map<String, Any?>)
