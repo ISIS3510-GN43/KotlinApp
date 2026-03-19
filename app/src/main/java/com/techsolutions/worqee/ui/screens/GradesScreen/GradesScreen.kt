@@ -1,6 +1,5 @@
 package com.techsolutions.worqee.ui.screens
 
-import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -34,8 +33,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.techsolutions.worqee.models.Materia
-import com.techsolutions.worqee.viewmodel.GradesViewModel
-
+import com.techsolutions.worqee.ui.screens.GradesScreen.viewmodel.GradesViewModel
+import com.techsolutions.worqee.ui.theme.BackgroundLight
+import com.techsolutions.worqee.ui.theme.PrimaryActionBlue
+import com.techsolutions.worqee.ui.theme.SurfaceLight
+import com.techsolutions.worqee.ui.theme.TextPrimary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,26 +45,35 @@ fun GradesScreen(viewModel: GradesViewModel) {
 
     val context = LocalContext.current
     val materias by viewModel.materiasState.collectAsState()
-    // Refrescar los datos del ViewModel
+
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.refresh()
     }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Grades") },
+                title = {
+                    Text(
+                        "Grades",
+                        color = TextPrimary,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = {
                         (context as? android.app.Activity)?.finish()
                     }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
+                            tint = TextPrimary
                         )
                     }
                 }
             )
-        }
+        },
+        containerColor = BackgroundLight
     ) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -70,11 +81,9 @@ fun GradesScreen(viewModel: GradesViewModel) {
                 .padding(padding)
         ) {
             items(materias) { materia ->
-
                 MateriaProgressRow(
                     materia = materia,
                     onClick = {
-
                         val intent = Intent(context, SubjectGradesActivity::class.java)
                         intent.putExtra("materiaNombre", materia.nombre)
                         context.startActivity(intent)
@@ -84,19 +93,21 @@ fun GradesScreen(viewModel: GradesViewModel) {
         }
     }
 }
+
 @Composable
 fun MateriaProgressRow(
     materia: Materia,
     onClick: () -> Unit
 ) {
-    val themeBlue = MaterialTheme.colorScheme.primary
+    val themeBlue = PrimaryActionBlue
     val progress = materia.calcularProgreso()
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .clickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = SurfaceLight)
     ) {
         Column(
             modifier = Modifier
@@ -111,15 +122,18 @@ fun MateriaProgressRow(
                 Text(
                     text = materia.nombre,
                     style = MaterialTheme.typography.titleMedium,
+                    color = TextPrimary,
                     modifier = Modifier.weight(1f)
                 )
                 val percentInt = (progress * 100).toInt()
                 Text(
                     text = "$percentInt%",
                     style = MaterialTheme.typography.bodyMedium,
+                    color = TextPrimary,
                     modifier = Modifier.padding(start = 12.dp)
                 )
             }
+
             LinearProgressIndicator(
                 progress = { progress },
                 modifier = Modifier

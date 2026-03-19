@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -27,21 +28,32 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.techsolutions.worqee.models.Nota
-import com.techsolutions.worqee.viewmodel.SubjectGradesViewModel
+import com.techsolutions.worqee.ui.screens.GradesScreen.viewmodel.SubjectGradesViewModel
+import com.techsolutions.worqee.ui.theme.BackgroundLight
+import com.techsolutions.worqee.ui.theme.PrimaryActionBlue
+import com.techsolutions.worqee.ui.theme.SurfaceLight
+import com.techsolutions.worqee.ui.theme.TextPrimary
+import com.techsolutions.worqee.ui.theme.TextSecondary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
     val context = LocalContext.current
-    val materia by viewModel.materiaState.collectAsState() 
+    val materia by viewModel.materiaState.collectAsState()
+    val enRiesgo by viewModel.estáEnRiesgo.collectAsState()
+    val porcentajeAgregado by viewModel.porcentajeAgregado.collectAsState()
+
     var nombreActividad by remember { mutableStateOf("") }
     var nota by remember { mutableStateOf("") }
     var porcentaje by remember { mutableStateOf("") }
@@ -50,32 +62,41 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
     }
     val promedio = materia.calcularPromedio()
     val progressValue = materia.calcularProgreso()
-    val themeBlue = MaterialTheme.colorScheme.primary
+    val themeBlue = PrimaryActionBlue
+
     val textFieldColors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = themeBlue,
         unfocusedBorderColor = themeBlue,
         cursorColor = themeBlue,
-        focusedLabelColor = Color.Black,
-        unfocusedLabelColor = Color.Black,
-        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+        focusedLabelColor = TextPrimary,
+        unfocusedLabelColor = TextPrimary,
+        focusedTextColor = TextPrimary,
+        unfocusedTextColor = TextPrimary
     )
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(materia.nombre) },
+                title = {
+                    Text(
+                        materia.nombre,
+                        color = TextPrimary,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = {
                         (context as? Activity)?.finish()
                     }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
+                            tint = TextPrimary
                         )
                     }
                 }
             )
-        }
+        },
+        containerColor = BackgroundLight
     ) { padding ->
         Column(
             modifier = Modifier
@@ -84,30 +105,74 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Goal")
+            if (enRiesgo) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = PrimaryActionBlue.copy(alpha = 0.15f)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Warning,
+                            contentDescription = "Alerta",
+                            tint = TextSecondary,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "⚠ Estás en riesgo",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = TextSecondary
+                            )
+                            Text(
+                                "Has completado el ${porcentajeAgregado.toInt()}% de calificaciones pero tu promedio es ${"%.2f".format(promedio)}. ¡Necesitas mejorar!",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary
+                            )
+                        }
+                    }
+                }
+            }
+
+            Text(
+                "Goal",
+                color = TextPrimary,
+                style = MaterialTheme.typography.bodyLarge
+            )
             OutlinedTextField(
                 value = objetivo,
                 onValueChange = {
                     objetivo = it
-                    viewModel.actualizarObjetivo(it) 
+                    viewModel.actualizarObjetivo(it)
                 },
                 label = { Text("Target grade") },
                 modifier = Modifier.fillMaxWidth(),
                 colors = textFieldColors
             )
             LinearProgressIndicator(
-                progress = { progressValue }, 
+                progress = { progressValue },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),
                 color = themeBlue,
                 trackColor = themeBlue.copy(alpha = 0.2f)
             )
-            Text("Current Average: %.2f".format(promedio))
+            Text(
+                "Current Average: %.2f".format(promedio),
+                color = TextPrimary
+            )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 "Add Activity",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
+                color = TextPrimary
             )
             OutlinedTextField(
                 value = nombreActividad,
@@ -146,7 +211,7 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = themeBlue,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
+                    contentColor = TextPrimary
                 )
             ) {
                 Text("Add Activity")
@@ -154,7 +219,8 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 "Activities",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
+                color = TextPrimary
             )
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -164,7 +230,7 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
+                            containerColor = SurfaceLight
                         )
                     ) {
                         Row(
@@ -176,17 +242,20 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     actividad.titulo ?: "Activity",
-                                    style = MaterialTheme.typography.bodyLarge
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = TextPrimary
                                 )
 
                                 Text(
                                     "Weight: ${actividad.porcentaje}%",
-                                    style = MaterialTheme.typography.bodySmall
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary
                                 )
                             }
                             Text(
                                 "${actividad.grade}",
-                                style = MaterialTheme.typography.titleMedium
+                                style = MaterialTheme.typography.titleMedium,
+                                color = TextPrimary
                             )
                         }
                     }

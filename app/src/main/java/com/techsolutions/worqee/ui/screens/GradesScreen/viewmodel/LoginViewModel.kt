@@ -1,4 +1,4 @@
-package com.techsolutions.worqee.ui.viewmodel
+package com.techsolutions.worqee.ui.screens.GradesScreen.viewmodel
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
@@ -10,7 +10,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-
+import com.techsolutions.worqee.ui.screens.GradesScreen.viewmodel.LoginViewModel
+import com.techsolutions.worqee.ui.screens.GradesScreen.viewmodel.LoginUiState
 sealed class LoginUiState {
     object Idle : LoginUiState()
     object Loading : LoginUiState()

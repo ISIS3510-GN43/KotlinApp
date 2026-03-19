@@ -2,6 +2,7 @@ package com.techsolutions.worqee.repository
 
 import com.techsolutions.worqee.models.Usuario
 import com.techsolutions.worqee.network.RetrofitClient
+import com.techsolutions.worqee.storage.LocalStorageManager
 import android.util.Log
 
 object UsuarioRepository {
@@ -92,6 +93,40 @@ object UsuarioRepository {
             }
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    // MÉTODOS DE CACHÉ LOCAL
+    fun guardarEnCaché(usuario: Usuario) {
+        try {
+            LocalStorageManager.guardarUsuario(usuario)
+            Log.d("UsuarioRepository", "Usuario guardado en caché")
+        } catch (e: Exception) {
+            Log.e("UsuarioRepository", "Error al guardar en caché: ${e.message}", e)
+        }
+    }
+
+    fun cargarDelCaché(): Usuario? {
+        return try {
+            val usuario = LocalStorageManager.cargarUsuario()
+            if (usuario != null) {
+                Log.d("UsuarioRepository", "Usuario cargado desde caché")
+            } else {
+                Log.d("UsuarioRepository", "No hay usuario en caché")
+            }
+            usuario
+        } catch (e: Exception) {
+            Log.e("UsuarioRepository", "Error al cargar del caché: ${e.message}", e)
+            null
+        }
+    }
+
+    fun limpiarCaché() {
+        try {
+            LocalStorageManager.limpiarCaché()
+            Log.d("UsuarioRepository", "Caché limpiado")
+        } catch (e: Exception) {
+            Log.e("UsuarioRepository", "Error al limpiar caché: ${e.message}", e)
         }
     }
 }
