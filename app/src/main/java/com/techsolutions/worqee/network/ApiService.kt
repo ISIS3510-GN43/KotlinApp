@@ -21,7 +21,7 @@ interface ApiService {
         @Body body: Map<String, String>
     ): Response<Usuario>
 
-    @POST("register")
+    @POST("usuarios/registrar")
     suspend fun register(
         @Body usuario: Usuario
     ): Response<Usuario>
