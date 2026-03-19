@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import com.techsolutions.worqee.ui.screens.GradesScreen
 import com.techsolutions.worqee.ui.theme.WorqeeTheme
-import com.techsolutions.worqee.viewmodel.GradesViewModel
+import com.techsolutions.worqee.ui.screens.GradesScreen.viewmodel.GradesViewModel
 
 class GradesActivity : ComponentActivity() {
     private val viewModel: GradesViewModel by viewModels()
