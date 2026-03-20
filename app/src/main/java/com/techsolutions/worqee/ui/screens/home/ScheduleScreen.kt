@@ -94,12 +94,6 @@ fun ScheduleScreen(
                     )
                 },
                 actions = {
-                    Icon(
-                        imageVector = Icons.Outlined.Notifications,
-                        contentDescription = "Notifications",
-                        modifier = Modifier.padding(end = 16.dp),
-                        tint = MaterialTheme.colorScheme.onBackground
-                    )
                     Box {
                         Icon(
                             imageVector = Icons.Outlined.MoreVert,
@@ -147,14 +141,11 @@ fun ScheduleScreen(
                             val intent = Intent(context, GradesActivity::class.java)
                             context.startActivity(intent)
                         }
-                        NavBarItem.SCHEDULE -> {
-                            val intent = Intent(context, GradesActivity::class.java)
-                            context.startActivity(intent) }
+                        NavBarItem.SCHEDULE -> { }
                         NavBarItem.FRIENDS -> {
                             val intent = Intent(context, FriendsActivity::class.java)
                             context.startActivity(intent)
                         }
-                        NavBarItem.STUDY -> { /* navegar */ }
                     }
                 }
             )
@@ -550,22 +541,14 @@ fun dayLabel(dia: Dia): String = dia.toString()
 
 fun formatHourLabel(hour: Int?): String {
     if (hour == null) return "--:--"
-    return String.format("%02d:00", hour)
+    val h = hour / 100
+    val m = hour % 100
+    return String.format("%02d:%02d", h, m)
 }
 
 fun formatHourRange(start: Int?, end: Int?): String {
     if (start == null || end == null) return "--:--"
-    return "${to12Hour(start)}-${to12Hour(end)}"
-}
-
-fun to12Hour(hour: Int): String {
-    val suffix = if (hour >= 12) "PM" else "AM"
-    val formattedHour = when {
-        hour == 0 -> 12
-        hour > 12 -> hour - 12
-        else -> hour
-    }
-    return String.format("%02d:00 %s", formattedHour, suffix)
+    return "${formatHourLabel(start)} - ${formatHourLabel(end)}"
 }
 
 fun parseHexColor(hex: String): Color {

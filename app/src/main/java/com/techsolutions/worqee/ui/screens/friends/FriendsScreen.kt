@@ -32,6 +32,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.LocationServices
 import android.annotation.SuppressLint
+import com.techsolutions.worqee.MainActivity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,8 +47,9 @@ fun FriendsScreen(
     ) @androidx.annotation.RequiresPermission(anyOf = [android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION]) { granted ->
         if (granted) {
             val client = LocationServices.getFusedLocationProviderClient(context)
-            @SuppressLint("MissingPermission")
+
             client.lastLocation.addOnSuccessListener { location ->
+                @SuppressLint("MissingPermission")
                 if (location != null) {
                     val url = viewModel.construirUrlMapa(location.latitude, location.longitude)
                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
@@ -63,9 +65,9 @@ fun FriendsScreen(
         )
         if (permiso == PackageManager.PERMISSION_GRANTED) {
             val client = LocationServices.getFusedLocationProviderClient(context)
-            @SuppressLint("MissingPermission")
-            client.lastLocation.addOnSuccessListener { location ->
 
+            client.lastLocation.addOnSuccessListener { location ->
+                @SuppressLint("MissingPermission")
                 val lat = location?.latitude ?: 4.6097
                 val lng = location?.longitude ?: -74.0817
                 val url = viewModel.construirUrlMapa(lat, lng)
@@ -97,7 +99,13 @@ fun FriendsScreen(
                             val intent = Intent(context, GradesActivity::class.java)
                             context.startActivity(intent)
                         }
-                        else -> { }
+                        NavBarItem.SCHEDULE -> {
+                            val intent = Intent(context, MainActivity::class.java)
+                            context.startActivity(intent)
+                        }
+                        NavBarItem.FRIENDS -> {
+
+                        }
                     }
                 }
             )

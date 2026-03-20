@@ -16,11 +16,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.ui.platform.LocalContext
-import com.techsolutions.worqee.ui.screens.GradesScreen.GradesActivity
 
 enum class NavBarItem {
-    SCHEDULE, FRIENDS, GRADES, STUDY
+    SCHEDULE, FRIENDS, GRADES
 }
 
 @Composable
@@ -51,12 +49,6 @@ fun BottomNavBar(
             onClick = { onItemSelected(NavBarItem.GRADES) },
             icon = { Icon(Icons.Outlined.School, contentDescription = "Grades") },
             label = { Text("Grades", style = MaterialTheme.typography.labelSmall) }
-        )
-        NavigationBarItem(
-            selected = selectedItem == NavBarItem.STUDY,
-            onClick = { onItemSelected(NavBarItem.STUDY) },
-            icon = { Icon(Icons.Outlined.AutoStories, contentDescription = "Study") },
-            label = { Text("Study", style = MaterialTheme.typography.labelSmall) }
         )
     }
 }

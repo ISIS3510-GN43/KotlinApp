@@ -1,4 +1,4 @@
-package com.techsolutions.worqee.ui.screens
+package com.techsolutions.worqee.ui.screens.GradesScreen.subjectGrades
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -6,8 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import com.techsolutions.worqee.models.Usuario
 import com.techsolutions.worqee.ui.theme.WorqeeTheme
-import com.techsolutions.worqee.ui.screens.GradesScreen.viewmodel.SubjectGradesViewModel
-import com.techsolutions.worqee.ui.screens.GradesScreen.viewmodel.SubjectGradesViewModelFactory
 
 class SubjectGradesActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
