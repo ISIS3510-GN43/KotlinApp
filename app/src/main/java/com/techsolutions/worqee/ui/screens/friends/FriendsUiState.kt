@@ -13,7 +13,9 @@ data class FriendUiModel(
     val name: String,
     val avatarUrl: String = "",
     val status: FriendStatus,
-    val freeAtLabel: String? = null
+    val freeAtLabel: String? = null,
+    val lat: Double = 0.0,
+    val lng: Double = 0.0
 )
 
 enum class FriendStatus {

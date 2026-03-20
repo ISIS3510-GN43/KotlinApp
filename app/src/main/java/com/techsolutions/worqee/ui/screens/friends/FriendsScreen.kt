@@ -24,6 +24,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.techsolutions.worqee.ui.components.BottomNavBar
 import com.techsolutions.worqee.ui.components.NavBarItem
 import com.techsolutions.worqee.ui.screens.GradesScreen.GradesActivity
+import android.Manifest
+import android.content.pm.PackageManager
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import com.google.android.gms.location.LocationServices
+import android.annotation.SuppressLint
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,6 +40,42 @@ fun FriendsScreen(
 ) {
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
     val context = LocalContext.current
+
+    val locationLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) @androidx.annotation.RequiresPermission(anyOf = [android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION]) { granted ->
+        if (granted) {
+            val client = LocationServices.getFusedLocationProviderClient(context)
+            @SuppressLint("MissingPermission")
+            client.lastLocation.addOnSuccessListener { location ->
+                if (location != null) {
+                    val url = viewModel.construirUrlMapa(location.latitude, location.longitude)
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                    context.startActivity(intent)
+                }
+            }
+        }
+    }
+
+    fun abrirMapa() {
+        val permiso = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.ACCESS_FINE_LOCATION
+        )
+        if (permiso == PackageManager.PERMISSION_GRANTED) {
+            val client = LocationServices.getFusedLocationProviderClient(context)
+            @SuppressLint("MissingPermission")
+            client.lastLocation.addOnSuccessListener { location ->
+
+                val lat = location?.latitude ?: 4.6097
+                val lng = location?.longitude ?: -74.0817
+                val url = viewModel.construirUrlMapa(lat, lng)
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                context.startActivity(intent)
+            }
+        } else {
+            locationLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }
 
     val allFriends = uiState.availableFriends + uiState.busyFriends + uiState.offlineFriends
 
@@ -106,6 +150,23 @@ fun FriendsScreen(
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
+                }
+            }
+            item {
+                Button(
+                    onClick = { abrirMapa() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.LocationOn,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Ver ubicación de amigos")
                 }
             }
 

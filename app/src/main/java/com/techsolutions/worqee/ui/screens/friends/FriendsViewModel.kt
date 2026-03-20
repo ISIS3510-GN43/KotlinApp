@@ -29,15 +29,38 @@ class FriendsViewModel : ViewModel() {
 
             val amigos = result.getOrDefault(emptyList())
 
-            val allFriends = amigos.map { amigo ->
+            // ← CAMBIO: mapIndexed para asignar ubicaciones de prueba cerca de Bogotá
+            // TODO: reemplazar lat/lng con ubicaciones reales desde Firebase
+            val allFriends = amigos.mapIndexed { index, amigo ->
                 FriendUiModel(
                     id = amigo.id,
                     name = amigo.username,
                     avatarUrl = amigo.foto,
-                    status = FriendStatus.AVAILABLE // TODO: calcular status real
+                    status = FriendStatus.AVAILABLE,
+                    lat = 4.6097 + (index * 0.01),
+                    lng = -74.0817 + (index * 0.01)
                 )
             }
-
+            // DATOS DE PRUEBA - borrar cuando Firebase funcione
+            val amigosFalsos = listOf(
+                FriendUiModel(
+                    id = "1",
+                    name = "Samuel",
+                    status = FriendStatus.AVAILABLE,
+                    lat = 4.6200,
+                    lng = -74.0700
+                ),
+                FriendUiModel(
+                    id = "2",
+                    name = "Ana",
+                    status = FriendStatus.BUSY,
+                    lat = 4.6300,
+                    lng = -74.0900
+                )
+            )
+            updateState(amigosFalsos, _uiState.value.searchQuery)
+            return@launch
+// FIN DATOS DE PRUEBA
             updateState(allFriends, _uiState.value.searchQuery)
         }
     }
@@ -76,6 +99,16 @@ class FriendsViewModel : ViewModel() {
         // TODO: obtener GPS y enviar al amigo
     }
 
+
+    fun construirUrlMapa(miLat: Double, miLng: Double): String {
+        val amigos = getAllFriends()
+        val waypoints = amigos.joinToString("|") { "${it.lat},${it.lng}" }
+        return "https://www.google.com/maps/dir/?api=1" +
+                "&origin=$miLat,$miLng" +
+                "&waypoints=$waypoints" +
+                "&travelmode=walking"
+    }
+
     fun onFindCommonFreeTime() {
         viewModelScope.launch {
             val usuario = Usuario.getInstance()
@@ -85,8 +118,6 @@ class FriendsViewModel : ViewModel() {
 
             val amigos = result.getOrDefault(emptyList())
 
-            // Recopilar todos los bloques ocupados de cada amigo
-            // Un bloque = (dia, horaInicio, horaFin)
             data class Bloque(val dia: Dia, val inicio: Int, val fin: Int)
 
             val bloquesOcupados = amigos.flatMap { amigo ->
@@ -103,19 +134,16 @@ class FriendsViewModel : ViewModel() {
                 } ?: emptyList()
             }
 
-            // Contar cuántos amigos están libres en cada franja horaria
-            // Franjas de 1 hora entre 600 (6am) y 2200 (10pm)
             val franjas = (600..2100 step 100).map { hora ->
                 val diasSemana = listOf(Dia.LUNES, Dia.MARTES, Dia.MIERCOLES, Dia.JUEVES, Dia.VIERNES)
                 diasSemana.map { dia ->
                     val ocupados = bloquesOcupados.count { bloque ->
                         bloque.dia == dia && bloque.inicio <= hora && bloque.fin > hora
                     }
-                    Triple(dia, hora, amigos.size - ocupados) // (dia, hora, libres)
+                    Triple(dia, hora, amigos.size - ocupados)
                 }
             }.flatten()
 
-            // El mejor hueco es donde más gente está libre
             val mejorHueco = franjas.maxByOrNull { it.third }
 
             if (mejorHueco != null) {
@@ -136,5 +164,4 @@ class FriendsViewModel : ViewModel() {
         }
         return "%02d:00 %s".format(h12, suffix)
     }
-
 }
