@@ -14,8 +14,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.techsolutions.worqee.ui.viewmodel.LoginUiState
-import com.techsolutions.worqee.ui.viewmodel.LoginViewModel
+import com.techsolutions.worqee.ui.screens.GradesScreen.viewmodel.LoginUiState
+import com.techsolutions.worqee.ui.screens.GradesScreen.viewmodel.LoginViewModel
 import java.util.Calendar
 
 @Composable
@@ -30,7 +30,6 @@ fun LoginScreen(
     var username by remember { mutableStateOf("") }
     var cumpleanios by remember { mutableStateOf("") }
 
-    // login o registro
     var esModoRegistro by remember { mutableStateOf(false) }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -47,27 +46,19 @@ fun LoginScreen(
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
+        modifier = Modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
         Text(text = "Worqee", style = MaterialTheme.typography.headlineLarge)
-
         Spacer(modifier = Modifier.height(8.dp))
-
         Text(
             text = if (esModoRegistro) "Crea tu cuenta" else "Inicia sesión para continuar",
             style = MaterialTheme.typography.bodyMedium
         )
-
         Spacer(modifier = Modifier.height(32.dp))
 
-
         if (esModoRegistro) {
-
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
@@ -75,10 +66,7 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
-
             Spacer(modifier = Modifier.height(16.dp))
-
-
             OutlinedTextField(
                 value = cumpleanios,
                 onValueChange = {},
@@ -88,24 +76,19 @@ fun LoginScreen(
                 singleLine = true,
                 trailingIcon = {
                     IconButton(onClick = {
-                        //  DatePickerDialog de Android
                         val calendario = Calendar.getInstance()
                         DatePickerDialog(
                             context,
                             { _, anio, mes, dia ->
-                                // Formateamos la fecha como YYYY-MM-DD
                                 cumpleanios = "$anio-${(mes + 1).toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}"
                             },
                             calendario.get(Calendar.YEAR),
                             calendario.get(Calendar.MONTH),
                             calendario.get(Calendar.DAY_OF_MONTH)
                         ).show()
-                    }) {
-                        Text("📅")
-                    }
+                    }) { Text("📅") }
                 }
             )
-
             Spacer(modifier = Modifier.height(16.dp))
         }
 
@@ -117,9 +100,7 @@ fun LoginScreen(
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
-
         Spacer(modifier = Modifier.height(16.dp))
-
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
@@ -129,26 +110,18 @@ fun LoginScreen(
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
-
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
             onClick = {
-                if (esModoRegistro) {
-                    viewModel.register(gmail, password, username, cumpleanios, context)
-                } else {
-                    viewModel.login(gmail, password, context)
-                }
+                if (esModoRegistro) viewModel.register(gmail, password, username, cumpleanios, context)
+                else viewModel.login(gmail, password, context)
             },
             modifier = Modifier.fillMaxWidth(),
             enabled = uiState !is LoginUiState.Loading
         ) {
             if (uiState is LoginUiState.Loading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    strokeWidth = 2.dp
-                )
+                CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
             } else {
                 Text(if (esModoRegistro) "Registrarse" else "Iniciar sesión")
             }

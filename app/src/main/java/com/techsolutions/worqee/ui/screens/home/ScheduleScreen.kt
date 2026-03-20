@@ -59,7 +59,16 @@ import com.techsolutions.worqee.ui.theme.TextSecondary
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.techsolutions.worqee.ui.components.NavBarItem
 import com.techsolutions.worqee.ui.components.BottomNavBar
-
+import android.content.Context
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.google.firebase.auth.FirebaseAuth
+import androidx.core.content.edit
+import com.techsolutions.worqee.models.Usuario
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,10 +76,12 @@ import com.techsolutions.worqee.ui.components.BottomNavBar
 fun ScheduleScreen(
 
     //Crea el ViewModel asociado, viewModel(), constructor por defecto basicamente
+    onLogout: () -> Unit = {},
     viewModel: ScheduleViewModel = viewModel()
 ) {
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
-
+    var mostrarMenu by remember { mutableStateOf(false) }
+    val context = LocalContext.current
     Scaffold(
         topBar = {
             TopAppBar(
@@ -88,12 +99,35 @@ fun ScheduleScreen(
                         modifier = Modifier.padding(end = 16.dp),
                         tint = MaterialTheme.colorScheme.onBackground
                     )
-                    Icon(
-                        imageVector = Icons.Outlined.MoreVert,
-                        contentDescription = "More",
-                        modifier = Modifier.padding(end = 16.dp),
-                        tint = MaterialTheme.colorScheme.onBackground
-                    )
+                    Box {
+                        Icon(
+                            imageVector = Icons.Outlined.MoreVert,
+                            contentDescription = "More",
+                            modifier = Modifier
+                                .padding(end = 16.dp)
+                                .clickable { mostrarMenu = true },
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                        DropdownMenu(
+                            expanded = mostrarMenu,
+                            onDismissRequest = { mostrarMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Cerrar sesión") },
+                                onClick = {
+                                    mostrarMenu = false
+                                    FirebaseAuth.getInstance().signOut()
+                                    Usuario.clearInstance()
+                                    val prefs = context.getSharedPreferences("worqee_prefs", Context.MODE_PRIVATE)
+                                    prefs.edit(commit = true) {
+                                        remove("userId")
+                                    }
+                                    onLogout()
+                                }
+                            )
+                        }
+                    }
+
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
