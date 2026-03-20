@@ -1,63 +1,41 @@
 {
   "project_info": {
-    "project_number": "449944482680",
-    "project_id": "techsolutions-61a2a",
-    "storage_bucket": "techsolutions-61a2a.firebasestorage.app"
+    "project_number": "509265018986",
+    "project_id": "techsolutions-eb89a",
+    "storage_bucket": "techsolutions-eb89a.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:449944482680:android:8033860a9d5aa9d72d4e8d",
-        "android_client_info": {
-          "package_name": "com.techsolutions.schedule"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "449944482680-o34r642p3juuttr7502b9bc2u0j4u6ru.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyBRBN6rk92dumHebrjKK6fOoKsKGEQ21u0"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "449944482680-o34r642p3juuttr7502b9bc2u0j4u6ru.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:449944482680:android:0023e970cf5e07e42d4e8d",
+        "mobilesdk_app_id": "1:509265018986:android:6cab429ccbd73462230a13",
         "android_client_info": {
           "package_name": "com.techsolutions.worqee"
         }
       },
       "oauth_client": [
         {
-          "client_id": "449944482680-o34r642p3juuttr7502b9bc2u0j4u6ru.apps.googleusercontent.com",
+          "client_id": "509265018986-e3v8m81dr3gfvdno6j8cfh1nnuh4leou.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBRBN6rk92dumHebrjKK6fOoKsKGEQ21u0"
+          "current_key": "AIzaSyDdSjW4fTl8mrIIcpadqJosYwbsn_9b1Yc"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "449944482680-o34r642p3juuttr7502b9bc2u0j4u6ru.apps.googleusercontent.com",
+              "client_id": "509265018986-e3v8m81dr3gfvdno6j8cfh1nnuh4leou.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "509265018986-4cjcoipr6712mciol5fjkmbvah6n2icc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.flutterApplication1"
+              }
             }
           ]
         }
