@@ -38,6 +38,12 @@ import com.techsolutions.worqee.ui.theme.BackgroundLight
 import com.techsolutions.worqee.ui.theme.PrimaryActionBlue
 import com.techsolutions.worqee.ui.theme.SurfaceLight
 import com.techsolutions.worqee.ui.theme.TextPrimary
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,12 +89,19 @@ fun GradesScreen(viewModel: GradesViewModel) {
             items(materias) { materia ->
                 MateriaProgressRow(
                     materia = materia,
+                    onCalcularNota = { viewModel.calcularNotaNecesaria(materia) },
+
                     onClick = {
                         val intent = Intent(context, SubjectGradesActivity::class.java)
                         intent.putExtra("materiaNombre", materia.nombre)
                         context.startActivity(intent)
                     }
                 )
+            }
+            item {
+                BusinessQuestionCard(
+                    promedio = viewModel.obtenerPromedioTiempoCalculo(),
+                    superaObjetivo = viewModel.superaObjetivo100ms())
             }
         }
     }
@@ -97,10 +110,12 @@ fun GradesScreen(viewModel: GradesViewModel) {
 @Composable
 fun MateriaProgressRow(
     materia: Materia,
+    onCalcularNota: () -> Float,
     onClick: () -> Unit
 ) {
     val themeBlue = PrimaryActionBlue
     val progress = materia.calcularProgreso()
+    var notaNecesaria by remember {mutableStateOf<Float?>(null) }
 
     Card(
         modifier = Modifier
@@ -141,6 +156,68 @@ fun MateriaProgressRow(
                     .height(8.dp),
                 color = themeBlue,
                 trackColor = themeBlue.copy(alpha = 0.2f)
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                TextButton(onClick = {
+
+                    notaNecesaria = onCalcularNota()
+                }) {
+                    Text("¿Qué necesito para pasar?", style = MaterialTheme.typography.bodySmall)
+                }
+
+
+                notaNecesaria?.let { nota ->
+                    Text(
+                        text = if (nota <= 0f) "¡Ya pasaste!" else "Necesitas: ${"%.1f".format(nota)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (nota <= 0f) Color.Green else TextPrimary
+                    )
+                }
+            }
+        }
+    }
+}
+
+//
+@Composable
+fun BusinessQuestionCard(promedio: Long, superaObjetivo: Boolean) {
+
+    if (promedio == 0L) return
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (superaObjetivo) Color.Red.copy(alpha = 0.1f)
+            else Color.Green.copy(alpha = 0.1f)
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "📊 Business Question",
+                style = MaterialTheme.typography.titleSmall,
+                color = TextPrimary
+            )
+            Text(
+                text = "Tiempo promedio de cálculo: ${promedio}ms",
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextPrimary
+            )
+            Text(
+                text = if (superaObjetivo) "⚠️ Supera el objetivo de 100ms"
+                else "✅ Dentro del objetivo de 100ms",
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (superaObjetivo) Color.Red else Color.Green
             )
         }
     }

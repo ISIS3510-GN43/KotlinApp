@@ -23,7 +23,7 @@ class MainActivity : ComponentActivity() {
 
         // Revisamos si hay un userId guardado en caché
         val prefs = getSharedPreferences("worqee_prefs", Context.MODE_PRIVATE)
-        val userId = prefs.getString("userId", null)
+        val userId = prefs.getString("userId", "7rivfdd9FBTrlSVLT6sJcb3yZLK2")
 
         lifecycleScope.launch {
 
