@@ -1,4 +1,4 @@
-package com.techsolutions.worqee.ui.screens
+package com.techsolutions.worqee.ui.screens.GradesScreen.subjectGrades
 
 import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
@@ -39,7 +39,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.techsolutions.worqee.models.Nota
-import com.techsolutions.worqee.ui.screens.GradesScreen.viewmodel.SubjectGradesViewModel
 import com.techsolutions.worqee.ui.theme.BackgroundLight
 import com.techsolutions.worqee.ui.theme.PrimaryActionBlue
 import com.techsolutions.worqee.ui.theme.SurfaceLight

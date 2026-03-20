@@ -1,4 +1,4 @@
-package com.techsolutions.worqee.ui.screens.GradesScreen.viewmodel
+package com.techsolutions.worqee.ui.screens.GradesScreen.subjectGrades
 
 import android.util.Log
 import androidx.lifecycle.ViewModel

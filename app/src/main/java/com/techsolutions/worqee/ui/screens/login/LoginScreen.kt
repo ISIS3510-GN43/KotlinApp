@@ -14,8 +14,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.techsolutions.worqee.ui.screens.GradesScreen.viewmodel.LoginUiState
-import com.techsolutions.worqee.ui.screens.GradesScreen.viewmodel.LoginViewModel
 import java.util.Calendar
 
 @Composable

@@ -33,17 +33,17 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.techsolutions.worqee.models.Materia
-import com.techsolutions.worqee.ui.screens.GradesScreen.viewmodel.GradesViewModel
+import com.techsolutions.worqee.ui.screens.GradesScreen.GradesViewModel
 import com.techsolutions.worqee.ui.theme.BackgroundLight
 import com.techsolutions.worqee.ui.theme.PrimaryActionBlue
 import com.techsolutions.worqee.ui.theme.SurfaceLight
 import com.techsolutions.worqee.ui.theme.TextPrimary
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.techsolutions.worqee.ui.screens.GradesScreen.subjectGrades.SubjectGradesActivity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
