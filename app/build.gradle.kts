@@ -78,5 +78,5 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     debugImplementation("androidx.compose.ui:ui-tooling:1.6.8")
     implementation("androidx.compose.material:material-icons-extended")
-
+    implementation("com.google.android.gms:play-services-location:21.0.1")
 }

@@ -69,13 +69,14 @@ import androidx.compose.runtime.setValue
 import com.google.firebase.auth.FirebaseAuth
 import androidx.core.content.edit
 import com.techsolutions.worqee.models.Usuario
+import com.techsolutions.worqee.storage.LocalStorageManager
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleScreen(
 
-    //Crea el ViewModel asociado, viewModel(), constructor por defecto basicamente
+
     onLogout: () -> Unit = {},
     viewModel: ScheduleViewModel = viewModel()
 ) {
@@ -118,6 +119,7 @@ fun ScheduleScreen(
                                     mostrarMenu = false
                                     FirebaseAuth.getInstance().signOut()
                                     Usuario.clearInstance()
+                                    LocalStorageManager.limpiarCaché()
                                     val prefs = context.getSharedPreferences("worqee_prefs", Context.MODE_PRIVATE)
                                     prefs.edit(commit = true) {
                                         remove("userId")
