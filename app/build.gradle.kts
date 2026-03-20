@@ -3,9 +3,10 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 
-    //Nuevo, del proyecto:
+    //Firebase:
     id("com.google.gms.google-services")
-
+    id("com.google.firebase.firebase-perf")
+    id("com.google.firebase.crashlytics")
 }
 
 android {
@@ -61,15 +62,27 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
-    //Nuevas, del proyecto:
+    //Retrofit:
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    //Firebase BOM — versión única para todas las dependencias Firebase:
     implementation(platform("com.google.firebase:firebase-bom:33.9.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage")
+    // Analytics — requerido por Performance Monitoring y Crashlytics
+    implementation("com.google.firebase:firebase-analytics")
+    // Performance Monitoring
+    implementation("com.google.firebase:firebase-perf")
+    // Crashlytics
+    implementation("com.google.firebase:firebase-crashlytics")
+
+    //Coroutines:
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+
+    //Compose + Lifecycle:
     implementation("androidx.activity:activity-compose:1.9.0")
     implementation("androidx.compose.ui:ui:1.6.8")
     implementation("androidx.compose.material3:material3:1.2.1")
@@ -78,5 +91,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     debugImplementation("androidx.compose.ui:ui-tooling:1.6.8")
     implementation("androidx.compose.material:material-icons-extended")
+
+    //GPS:
     implementation("com.google.android.gms:play-services-location:21.0.1")
 }

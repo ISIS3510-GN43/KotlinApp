@@ -4,17 +4,35 @@ import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-
 import androidx.lifecycle.viewModelScope
 import com.techsolutions.worqee.models.Dia
 import com.techsolutions.worqee.models.Usuario
 import com.techsolutions.worqee.repository.UsuarioRepository
 import kotlinx.coroutines.launch
+import kotlin.math.sqrt
+
+data class EdificioUniversidad(
+    val nombre: String,
+    val lat: Double,
+    val lng: Double
+)
 
 class FriendsViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(FriendsUiState())
     val uiState: StateFlow<FriendsUiState> = _uiState.asStateFlow()
+
+
+    private val edificios = listOf(
+        EdificioUniversidad("Edificio ML (Matemáticas)", 4.60178, -74.06582),
+        EdificioUniversidad("Edificio W (Ingeniería)", 4.60215, -74.06618),
+        EdificioUniversidad("Edificio SD (Santo Domingo)", 4.60143, -74.06601),
+        EdificioUniversidad("Biblioteca General", 4.60165, -74.06555),
+        EdificioUniversidad("Edificio RGA", 4.60190, -74.06540),
+        EdificioUniversidad("Centro Deportivo Uniandes", 4.60250, -74.06490),
+        EdificioUniversidad("Edificio AU (Artes)", 4.60120, -74.06570),
+        EdificioUniversidad("Edificio C (Ciencias)", 4.60200, -74.06650)
+    )
 
     init {
         loadFriends()
@@ -29,8 +47,6 @@ class FriendsViewModel : ViewModel() {
 
             val amigos = result.getOrDefault(emptyList())
 
-            // ← CAMBIO: mapIndexed para asignar ubicaciones de prueba cerca de Bogotá
-            // TODO: reemplazar lat/lng con ubicaciones reales desde Firebase
             val allFriends = amigos.mapIndexed { index, amigo ->
                 FriendUiModel(
                     id = amigo.id,
@@ -41,6 +57,7 @@ class FriendsViewModel : ViewModel() {
                     lng = -74.0817 + (index * 0.01)
                 )
             }
+
             // DATOS DE PRUEBA - borrar cuando Firebase funcione
             val amigosFalsos = listOf(
                 FriendUiModel(
@@ -60,7 +77,7 @@ class FriendsViewModel : ViewModel() {
             )
             updateState(amigosFalsos, _uiState.value.searchQuery)
             return@launch
-// FIN DATOS DE PRUEBA
+            // FIN DATOS DE PRUEBA
             updateState(allFriends, _uiState.value.searchQuery)
         }
     }
@@ -95,18 +112,23 @@ class FriendsViewModel : ViewModel() {
         )
     }
 
-    fun onShareLocation(friendId: String) {
-        // TODO: obtener GPS y enviar al amigo
-    }
+    /**
+     * Dado la ubicación actual del usuario, encuentra el edificio universitario
+     * más cercano y devuelve una URL de navegación hacia él en Google Maps.
+     */
+    fun construirUrlEdificioMasCercano(miLat: Double, miLng: Double): Pair<String, String> {
+        val edificioCercano = edificios.minByOrNull { edificio ->
+            val dLat = edificio.lat - miLat
+            val dLng = edificio.lng - miLng
+            sqrt(dLat * dLat + dLng * dLng)
+        } ?: edificios.first()
 
-
-    fun construirUrlMapa(miLat: Double, miLng: Double): String {
-        val amigos = getAllFriends()
-        val waypoints = amigos.joinToString("|") { "${it.lat},${it.lng}" }
-        return "https://www.google.com/maps/dir/?api=1" +
+        val url = "https://www.google.com/maps/dir/?api=1" +
                 "&origin=$miLat,$miLng" +
-                "&waypoints=$waypoints" +
+                "&destination=${edificioCercano.lat},${edificioCercano.lng}" +
                 "&travelmode=walking"
+
+        return Pair(url, edificioCercano.nombre)
     }
 
     fun onFindCommonFreeTime() {
