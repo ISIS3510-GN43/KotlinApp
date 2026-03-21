@@ -70,6 +70,7 @@ import com.google.firebase.auth.FirebaseAuth
 import androidx.core.content.edit
 import com.techsolutions.worqee.models.Usuario
 import com.techsolutions.worqee.storage.LocalStorageManager
+import androidx.compose.ui.text.style.TextOverflow
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -252,7 +253,10 @@ fun DayChip(
         Text(
             text = day,
             style = MaterialTheme.typography.labelMedium,
-            color = dayColor
+            color = dayColor,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Visible  // o puedes usar AutoSize si usas Compose 1.7+
         )
     }
 }
@@ -294,10 +298,6 @@ fun ScheduleTimeline(materias: List<Materia>) {
         materias.forEachIndexed { index, materia ->
             val horaLabel = formatHourLabel(materia.horaInicio.firstOrNull())
             TimeSlot(hora = horaLabel, materia = materia)
-
-            if (index == 1) {
-                LunchBreak()
-            }
         }
     }
 }
@@ -400,28 +400,7 @@ fun ClassCard(materia: Materia) {
     }
 }
 
-@Composable
-fun LunchBreak() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Spacer(modifier = Modifier.width(48.dp))
-        Spacer(modifier = Modifier.width(8.dp))
-        Divider(modifier = Modifier.weight(1f), color = BorderLight)
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(
-            text = "LUNCH BREAK",
-            style = MaterialTheme.typography.labelMedium,
-            color = CaribbeanCurrent.copy(alpha = 0.55f),
-            fontStyle = FontStyle.Italic
-        )
-        Spacer(modifier = Modifier.width(12.dp))
-        Divider(modifier = Modifier.weight(1f), color = BorderLight)
-    }
-}
+
 
 @Composable
 fun WeeklyScheduleGrid(

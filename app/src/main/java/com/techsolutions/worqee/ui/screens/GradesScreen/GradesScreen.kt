@@ -168,7 +168,7 @@ fun MateriaProgressRow(
             ) {
                 TextButton(onClick = { onCalcularNota() }) {
                     Text(
-                        "¿Qué necesito para pasar?",
+                        "How much do I need to pass?",
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary
                     )
