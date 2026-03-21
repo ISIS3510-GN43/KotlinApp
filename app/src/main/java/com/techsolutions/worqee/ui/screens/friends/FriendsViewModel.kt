@@ -122,9 +122,6 @@ class FriendsViewModel : ViewModel() {
         updateState(allFriends, query)
     }
 
-    fun onFindCommonTime() {
-        // TODO: lógica para encontrar tiempo libre en común
-    }
 
     fun onMessageFriend(friendId: String) {
         // TODO: abrir chat con el amigo

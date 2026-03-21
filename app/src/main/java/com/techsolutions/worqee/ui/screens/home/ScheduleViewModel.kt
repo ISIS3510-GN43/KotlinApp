@@ -17,7 +17,7 @@ class ScheduleViewModel : ViewModel() {
     }
 
     fun loadSchedule() {
-        // Protegemos el acceso al singleton — si aún no está listo, salimos sin crashear
+        //  Acceso al singleton — si aún no está listo, salimos sin crashear
         val usuario = try {
             Usuario.getInstance()
         } catch (e: IllegalStateException) {

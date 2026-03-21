@@ -56,7 +56,7 @@ class GradesViewModel : ViewModel() {
             return -2f
         }
 
-        // Firebase Performance trace
+        // Firebase Performance trace - Telemetria
         val trace = FirebasePerformance.getInstance().newTrace("calcular_nota_necesaria")
         trace.start()
 
@@ -83,7 +83,7 @@ class GradesViewModel : ViewModel() {
         trace.putMetric("supera_100ms", if (tiempoTranscurrido > 100L) 1L else 0L)
         trace.stop()
 
-        // Key por id, no por nombre
+        // Key por id, no por nombre, razon de por allá arriba
         _notasNecesarias.value = _notasNecesarias.value + (materia.id to resultado)
 
         return resultado
