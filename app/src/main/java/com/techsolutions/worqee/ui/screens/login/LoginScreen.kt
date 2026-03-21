@@ -8,12 +8,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.techsolutions.worqee.ui.screens.login.LoginViewModel
 import java.util.Calendar
 
 @Composable
@@ -32,6 +34,8 @@ fun LoginScreen(
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    // Solo manejamos Success y Error con efectos secundarios
+    // Lockout se maneja inline en la UI
     LaunchedEffect(uiState) {
         when (uiState) {
             is LoginUiState.Success -> onLoginSuccess()
@@ -43,8 +47,13 @@ fun LoginScreen(
         }
     }
 
+    val isLocked = uiState is LoginUiState.Lockout
+    val isLoading = uiState is LoginUiState.Loading
+
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -56,13 +65,45 @@ fun LoginScreen(
         )
         Spacer(modifier = Modifier.height(32.dp))
 
+        // Banner de lockout — visible solo cuando la cuenta está bloqueada temporalmente
+        if (isLocked) {
+            val segundos = (uiState as LoginUiState.Lockout).segundosRestantes
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.Red.copy(alpha = 0.1f)
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "🔒 Demasiados intentos fallidos",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = Color.Red
+                    )
+                    Text(
+                        text = "Intenta de nuevo en $segundos segundo${if (segundos != 1) "s" else ""}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Red
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
         if (esModoRegistro) {
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
                 label = { Text("Nombre de usuario") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                enabled = !isLocked
             )
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
@@ -72,19 +113,24 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth(),
                 readOnly = true,
                 singleLine = true,
+                enabled = !isLocked,
                 trailingIcon = {
-                    IconButton(onClick = {
-                        val calendario = Calendar.getInstance()
-                        DatePickerDialog(
-                            context,
-                            { _, anio, mes, dia ->
-                                cumpleanios = "$anio-${(mes + 1).toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}"
-                            },
-                            calendario.get(Calendar.YEAR),
-                            calendario.get(Calendar.MONTH),
-                            calendario.get(Calendar.DAY_OF_MONTH)
-                        ).show()
-                    }) { Text("📅") }
+                    IconButton(
+                        onClick = {
+                            if (!isLocked) {
+                                val calendario = Calendar.getInstance()
+                                DatePickerDialog(
+                                    context,
+                                    { _, anio, mes, dia ->
+                                        cumpleanios = "$anio-${(mes + 1).toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}"
+                                    },
+                                    calendario.get(Calendar.YEAR),
+                                    calendario.get(Calendar.MONTH),
+                                    calendario.get(Calendar.DAY_OF_MONTH)
+                                ).show()
+                            }
+                        }
+                    ) { Text("📅") }
                 }
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -96,7 +142,8 @@ fun LoginScreen(
             label = { Text("Correo electrónico") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            enabled = !isLocked
         )
         Spacer(modifier = Modifier.height(16.dp))
         OutlinedTextField(
@@ -106,7 +153,8 @@ fun LoginScreen(
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            enabled = !isLocked
         )
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -116,22 +164,33 @@ fun LoginScreen(
                 else viewModel.login(gmail, password, context)
             },
             modifier = Modifier.fillMaxWidth(),
-            enabled = uiState !is LoginUiState.Loading
+            // Deshabilitado durante loading Y durante lockout
+            enabled = !isLoading && !isLocked
         ) {
-            if (uiState is LoginUiState.Loading) {
-                CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
-            } else {
-                Text(if (esModoRegistro) "Registrarse" else "Iniciar sesión")
+            when {
+                isLoading -> CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    strokeWidth = 2.dp
+                )
+                isLocked -> {
+                    val segundos = (uiState as LoginUiState.Lockout).segundosRestantes
+                    Text("Bloqueado ($segundos s)")
+                }
+                else -> Text(if (esModoRegistro) "Registrarse" else "Iniciar sesión")
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        TextButton(onClick = {
-            esModoRegistro = !esModoRegistro
-            gmail = ""; password = ""; username = ""; cumpleanios = ""
-            viewModel.resetState()
-        }) {
+        TextButton(
+            onClick = {
+                esModoRegistro = !esModoRegistro
+                gmail = ""; password = ""; username = ""; cumpleanios = ""
+                viewModel.resetState()
+            },
+            enabled = !isLocked
+        ) {
             Text(if (esModoRegistro) "¿Ya tienes cuenta? Inicia sesión" else "¿No tienes cuenta? Regístrate")
         }
     }

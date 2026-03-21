@@ -1,6 +1,13 @@
 package com.techsolutions.worqee.ui.screens.friends
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,20 +26,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.gms.location.LocationServices
+import com.techsolutions.worqee.MainActivity
 import com.techsolutions.worqee.ui.components.BottomNavBar
 import com.techsolutions.worqee.ui.components.NavBarItem
 import com.techsolutions.worqee.ui.screens.GradesScreen.GradesActivity
-import android.Manifest
-import android.content.pm.PackageManager
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
-import com.google.android.gms.location.LocationServices
-import android.annotation.SuppressLint
-import com.techsolutions.worqee.MainActivity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,37 +43,36 @@ fun FriendsScreen(
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
     val context = LocalContext.current
 
+    // Launcher de permiso GPS → al concederse, navega al edificio más cercano
     val locationLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) @androidx.annotation.RequiresPermission(anyOf = [android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION]) { granted ->
+    ) { granted ->
         if (granted) {
+            @SuppressLint("MissingPermission")
             val client = LocationServices.getFusedLocationProviderClient(context)
-
             client.lastLocation.addOnSuccessListener { location ->
-                @SuppressLint("MissingPermission")
-                if (location != null) {
-                    val url = viewModel.construirUrlMapa(location.latitude, location.longitude)
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                    context.startActivity(intent)
-                }
+                val lat = location?.latitude ?: 4.60178
+                val lng = location?.longitude ?: -74.06582
+                val (url, nombreEdificio) = viewModel.construirUrlEdificioMasCercano(lat, lng)
+                Toast.makeText(context, "Navegando a: $nombreEdificio", Toast.LENGTH_SHORT).show()
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
             }
         }
     }
 
-    fun abrirMapa() {
+    fun navegarAlEdificioMasCercano() {
         val permiso = ContextCompat.checkSelfPermission(
             context, Manifest.permission.ACCESS_FINE_LOCATION
         )
         if (permiso == PackageManager.PERMISSION_GRANTED) {
+            @SuppressLint("MissingPermission")
             val client = LocationServices.getFusedLocationProviderClient(context)
-
             client.lastLocation.addOnSuccessListener { location ->
-                @SuppressLint("MissingPermission")
-                val lat = location?.latitude ?: 4.6097
-                val lng = location?.longitude ?: -74.0817
-                val url = viewModel.construirUrlMapa(lat, lng)
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                context.startActivity(intent)
+                val lat = location?.latitude ?: 4.60178
+                val lng = location?.longitude ?: -74.06582
+                val (url, nombreEdificio) = viewModel.construirUrlEdificioMasCercano(lat, lng)
+                Toast.makeText(context, "Navegando a: $nombreEdificio", Toast.LENGTH_SHORT).show()
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
             }
         } else {
             locationLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -95,17 +95,13 @@ fun FriendsScreen(
                 selectedItem = NavBarItem.FRIENDS,
                 onItemSelected = { item ->
                     when (item) {
-                        NavBarItem.GRADES -> {
-                            val intent = Intent(context, GradesActivity::class.java)
-                            context.startActivity(intent)
-                        }
-                        NavBarItem.SCHEDULE -> {
-                            val intent = Intent(context, MainActivity::class.java)
-                            context.startActivity(intent)
-                        }
-                        NavBarItem.FRIENDS -> {
-
-                        }
+                        NavBarItem.GRADES -> context.startActivity(
+                            Intent(context, GradesActivity::class.java)
+                        )
+                        NavBarItem.SCHEDULE -> context.startActivity(
+                            Intent(context, MainActivity::class.java)
+                        )
+                        NavBarItem.FRIENDS -> {}
                     }
                 }
             )
@@ -132,12 +128,11 @@ fun FriendsScreen(
                 )
             }
 
-            // Lista de amigos
+            // Lista de amigos — solo botón Message, sin ícono de ubicación
             items(allFriends) { friend ->
                 FriendCard(
                     friend = friend,
-                    onMessage = { viewModel.onMessageFriend(friend.id) },
-                    onShareLocation = { viewModel.onShareLocation(friend.id) }
+                    onMessage = { viewModel.onMessageFriend(friend.id) }
                 )
             }
 
@@ -160,9 +155,11 @@ fun FriendsScreen(
                     }
                 }
             }
+
+            // Botón GPS → edificio universitario más cercano
             item {
                 Button(
-                    onClick = { abrirMapa() },
+                    onClick = { navegarAlEdificioMasCercano() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 8.dp),
@@ -174,7 +171,7 @@ fun FriendsScreen(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Ver ubicación de amigos")
+                    Text("Ir al edificio más cercano")
                 }
             }
 
@@ -205,8 +202,7 @@ fun FriendsScreen(
 @Composable
 fun FriendCard(
     friend: FriendUiModel,
-    onMessage: (() -> Unit)? = null,
-    onShareLocation: (() -> Unit)? = null
+    onMessage: (() -> Unit)? = null
 ) {
     val statusColor = when (friend.status) {
         FriendStatus.AVAILABLE -> Color(0xFF4CAF50)
@@ -228,6 +224,7 @@ fun FriendCard(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Avatar con inicial del nombre
             Box(
                 modifier = Modifier
                     .size(44.dp)
@@ -266,16 +263,7 @@ fun FriendCard(
                 }
             }
 
-            if (onShareLocation != null) {
-                IconButton(onClick = onShareLocation) {
-                    Icon(
-                        imageVector = Icons.Outlined.LocationOn,
-                        contentDescription = "Share location",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
+            // Solo botón Message — sin ícono de ubicación
             if (onMessage != null) {
                 TextButton(onClick = onMessage) {
                     Text("Message", color = MaterialTheme.colorScheme.primary)

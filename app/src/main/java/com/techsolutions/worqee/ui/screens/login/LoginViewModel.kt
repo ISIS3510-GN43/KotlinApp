@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.techsolutions.worqee.models.Usuario
 import com.techsolutions.worqee.repository.UsuarioRepository
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -16,6 +17,8 @@ sealed class LoginUiState {
     object Loading : LoginUiState()
     object Success : LoginUiState()
     data class Error(val message: String) : LoginUiState()
+    // Nuevo: bloqueo temporal por demasiados intentos fallidos
+    data class Lockout(val segundosRestantes: Int) : LoginUiState()
 }
 
 class LoginViewModel : ViewModel() {
@@ -24,8 +27,14 @@ class LoginViewModel : ViewModel() {
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
     val uiState: StateFlow<LoginUiState> = _uiState
 
+    // Contador de intentos fallidos — se resetea cuando el lockout termina
+    private var failedAttempts = 0
+    private val LOCKOUT_MAX_ATTEMPTS = 3
+    private val LOCKOUT_DURATION_SECONDS = 30
 
     fun login(gmail: String, password: String, context: Context) {
+        // Bloqueado: ignorar el intento
+        if (_uiState.value is LoginUiState.Lockout) return
 
         if (gmail.isBlank() || password.isBlank()) {
             _uiState.value = LoginUiState.Error("Por favor completa todos los campos")
@@ -36,7 +45,6 @@ class LoginViewModel : ViewModel() {
             _uiState.value = LoginUiState.Loading
 
             try {
-
                 val resultado = firebaseAuth
                     .signInWithEmailAndPassword(gmail, password)
                     .await()
@@ -44,16 +52,16 @@ class LoginViewModel : ViewModel() {
                 val userId = resultado.user?.uid
 
                 if (userId != null) {
-
                     val prefs = context.getSharedPreferences("worqee_prefs", Context.MODE_PRIVATE)
                     prefs.edit().putString("userId", userId).apply()
 
-
                     UsuarioRepository.cargarSingletonUsuario(userId)
 
+                    // Login exitoso: resetear contador
+                    failedAttempts = 0
                     _uiState.value = LoginUiState.Success
                 } else {
-                    _uiState.value = LoginUiState.Error("No se pudo obtener el usuario")
+                    registrarFallo("No se pudo obtener el usuario")
                 }
 
             } catch (e: Exception) {
@@ -63,11 +71,39 @@ class LoginViewModel : ViewModel() {
                     e.message?.contains("network") == true -> "Sin conexión a internet"
                     else -> "Error al iniciar sesión"
                 }
-                _uiState.value = LoginUiState.Error(mensaje)
+                registrarFallo(mensaje)
             }
         }
     }
 
+    /**
+     * Registra un intento fallido. Si se alcanzan los intentos máximos,
+     * inicia el countdown de bloqueo; si no, muestra el error normal.
+     */
+    private fun registrarFallo(mensaje: String) {
+        failedAttempts++
+        if (failedAttempts >= LOCKOUT_MAX_ATTEMPTS) {
+            iniciarLockout()
+        } else {
+            val intentosRestantes = LOCKOUT_MAX_ATTEMPTS - failedAttempts
+            _uiState.value = LoginUiState.Error("$mensaje. Te quedan $intentosRestantes intento(s).")
+        }
+    }
+
+    /**
+     * Inicia el countdown de bloqueo. Emite Lockout(n) cada segundo
+     * hasta llegar a 0, luego vuelve a Idle y resetea el contador.
+     */
+    private fun iniciarLockout() {
+        viewModelScope.launch {
+            for (segundos in LOCKOUT_DURATION_SECONDS downTo 1) {
+                _uiState.value = LoginUiState.Lockout(segundos)
+                delay(1000L)
+            }
+            failedAttempts = 0
+            _uiState.value = LoginUiState.Idle
+        }
+    }
 
     fun register(
         gmail: String,
@@ -85,9 +121,7 @@ class LoginViewModel : ViewModel() {
             _uiState.value = LoginUiState.Loading
 
             try {
-
                 val fotoDefault = "https://firebasestorage.googleapis.com/v0/b/techsolutions-eb89a.firebasestorage.app/o/Fotos%20de%20perfil%2Fuser_profile_photo.png?alt=media&token=63c45849-4d40-4805-a222-0e130c588bc8"
-
 
                 val nuevoUsuario = Usuario(
                     gmail = gmail,
@@ -97,17 +131,14 @@ class LoginViewModel : ViewModel() {
                     foto = fotoDefault
                 )
 
-
                 val result = UsuarioRepository.register(nuevoUsuario)
 
                 if (result.isSuccess) {
                     val usuarioCreado = result.getOrNull()
-
                     if (usuarioCreado != null) {
-                        // Guardamos el userId que devuelve el backend en caché
                         val prefs = context.getSharedPreferences("worqee_prefs", Context.MODE_PRIVATE)
                         prefs.edit().putString("userId", usuarioCreado.id).apply()
-
+                        UsuarioRepository.cargarSingletonUsuario(usuarioCreado.id)
                         _uiState.value = LoginUiState.Success
                     }
                 } else {
@@ -121,6 +152,9 @@ class LoginViewModel : ViewModel() {
     }
 
     fun resetState() {
-        _uiState.value = LoginUiState.Idle
+        // No resetear si hay un lockout activo
+        if (_uiState.value !is LoginUiState.Lockout) {
+            _uiState.value = LoginUiState.Idle
+        }
     }
 }
