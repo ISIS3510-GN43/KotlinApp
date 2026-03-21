@@ -4,6 +4,9 @@ import android.app.DatePickerDialog
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -12,10 +15,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.techsolutions.worqee.ui.screens.login.LoginViewModel
 import java.util.Calendar
 
 @Composable
@@ -27,15 +30,21 @@ fun LoginScreen(
 
     var gmail by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var cumpleanios by remember { mutableStateOf("") }
+
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
+
+
+    var passwordError by remember { mutableStateOf<String?>(null) }
+    var confirmPasswordError by remember { mutableStateOf<String?>(null) }
 
     var esModoRegistro by remember { mutableStateOf(false) }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // Solo manejamos Success y Error con efectos secundarios
-    // Lockout se maneja inline en la UI
     LaunchedEffect(uiState) {
         when (uiState) {
             is LoginUiState.Success -> onLoginSuccess()
@@ -65,14 +74,12 @@ fun LoginScreen(
         )
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Banner de lockout — visible solo cuando la cuenta está bloqueada temporalmente
+        // Banner de lockout
         if (isLocked) {
             val segundos = (uiState as LoginUiState.Lockout).segundosRestantes
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.Red.copy(alpha = 0.1f)
-                )
+                colors = CardDefaults.cardColors(containerColor = Color.Red.copy(alpha = 0.1f))
             ) {
                 Column(
                     modifier = Modifier
@@ -96,6 +103,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
+
         if (esModoRegistro) {
             OutlinedTextField(
                 value = username,
@@ -115,27 +123,26 @@ fun LoginScreen(
                 singleLine = true,
                 enabled = !isLocked,
                 trailingIcon = {
-                    IconButton(
-                        onClick = {
-                            if (!isLocked) {
-                                val calendario = Calendar.getInstance()
-                                DatePickerDialog(
-                                    context,
-                                    { _, anio, mes, dia ->
-                                        cumpleanios = "$anio-${(mes + 1).toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}"
-                                    },
-                                    calendario.get(Calendar.YEAR),
-                                    calendario.get(Calendar.MONTH),
-                                    calendario.get(Calendar.DAY_OF_MONTH)
-                                ).show()
-                            }
+                    IconButton(onClick = {
+                        if (!isLocked) {
+                            val calendario = Calendar.getInstance()
+                            DatePickerDialog(
+                                context,
+                                { _, anio, mes, dia ->
+                                    cumpleanios = "$anio-${(mes + 1).toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}"
+                                },
+                                calendario.get(Calendar.YEAR),
+                                calendario.get(Calendar.MONTH),
+                                calendario.get(Calendar.DAY_OF_MONTH)
+                            ).show()
                         }
-                    ) { Text("📅") }
+                    }) { Text("📅") }
                 }
             )
             Spacer(modifier = Modifier.height(16.dp))
         }
 
+        // Correo
         OutlinedTextField(
             value = gmail,
             onValueChange = { gmail = it },
@@ -146,25 +153,86 @@ fun LoginScreen(
             enabled = !isLocked
         )
         Spacer(modifier = Modifier.height(16.dp))
+
+
         OutlinedTextField(
             value = password,
-            onValueChange = { password = it },
+            onValueChange = {
+                password = it
+                passwordError = null // Limpiar error al editar
+            },
             label = { Text("Contraseña") },
-            visualTransformation = PasswordVisualTransformation(),
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            enabled = !isLocked
+            enabled = !isLocked,
+            isError = passwordError != null,
+            supportingText = passwordError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+            trailingIcon = {
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(
+                        imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                        contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
+                    )
+                }
+            }
         )
+
+
+        if (esModoRegistro) {
+            Spacer(modifier = Modifier.height(16.dp))
+            OutlinedTextField(
+                value = confirmPassword,
+                onValueChange = {
+                    confirmPassword = it
+                    confirmPasswordError = null
+                },
+                label = { Text("Confirmar contraseña") },
+                visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                enabled = !isLocked,
+                isError = confirmPasswordError != null,
+                supportingText = confirmPasswordError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+                trailingIcon = {
+                    IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                        Icon(
+                            imageVector = if (confirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                            contentDescription = if (confirmPasswordVisible) "Ocultar contraseña" else "Mostrar contraseña"
+                        )
+                    }
+                }
+            )
+        }
+
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
             onClick = {
-                if (esModoRegistro) viewModel.register(gmail, password, username, cumpleanios, context)
-                else viewModel.login(gmail, password, context)
+                if (esModoRegistro) {
+
+                    val tieneEspecial = password.any { !it.isLetterOrDigit() }
+                    var hayError = false
+
+                    if (password.length < 8 || !tieneEspecial) {
+                        passwordError = "Mínimo 8 caracteres y un carácter especial"
+                        hayError = true
+                    }
+                    if (password != confirmPassword) {
+                        confirmPasswordError = "Las contraseñas no coinciden"
+                        hayError = true
+                    }
+
+                    if (!hayError) {
+                        viewModel.register(gmail, password, username, cumpleanios, context)
+                    }
+                } else {
+                    viewModel.login(gmail, password, context)
+                }
             },
             modifier = Modifier.fillMaxWidth(),
-            // Deshabilitado durante loading Y durante lockout
             enabled = !isLoading && !isLocked
         ) {
             when {
@@ -186,7 +254,9 @@ fun LoginScreen(
         TextButton(
             onClick = {
                 esModoRegistro = !esModoRegistro
-                gmail = ""; password = ""; username = ""; cumpleanios = ""
+                gmail = ""; password = ""; confirmPassword = ""; username = ""; cumpleanios = ""
+                passwordError = null; confirmPasswordError = null
+                passwordVisible = false; confirmPasswordVisible = false
                 viewModel.resetState()
             },
             enabled = !isLocked

@@ -22,7 +22,6 @@ class FriendsViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(FriendsUiState())
     val uiState: StateFlow<FriendsUiState> = _uiState.asStateFlow()
 
-
     private val edificios = listOf(
         EdificioUniversidad("Edificio ML (Matemáticas)", 4.60178, -74.06582),
         EdificioUniversidad("Edificio W (Ingeniería)", 4.60215, -74.06618),
@@ -40,9 +39,14 @@ class FriendsViewModel : ViewModel() {
 
     private fun loadFriends() {
         viewModelScope.launch {
-            val usuario = Usuario.getInstance()
-            val result = UsuarioRepository.getAmigos(usuario.id)
+            // Fix: proteger acceso al singleton — si aún no está listo, salir sin crashear
+            val usuario = try {
+                Usuario.getInstance()
+            } catch (e: IllegalStateException) {
+                return@launch
+            }
 
+            val result = UsuarioRepository.getAmigos(usuario.id)
             if (result.isFailure) return@launch
 
             val amigos = result.getOrDefault(emptyList())
@@ -58,26 +62,6 @@ class FriendsViewModel : ViewModel() {
                 )
             }
 
-            // DATOS DE PRUEBA - borrar cuando Firebase funcione
-            val amigosFalsos = listOf(
-                FriendUiModel(
-                    id = "1",
-                    name = "Samuel",
-                    status = FriendStatus.AVAILABLE,
-                    lat = 4.6200,
-                    lng = -74.0700
-                ),
-                FriendUiModel(
-                    id = "2",
-                    name = "Ana",
-                    status = FriendStatus.BUSY,
-                    lat = 4.6300,
-                    lng = -74.0900
-                )
-            )
-            updateState(amigosFalsos, _uiState.value.searchQuery)
-            return@launch
-            // FIN DATOS DE PRUEBA
             updateState(allFriends, _uiState.value.searchQuery)
         }
     }
@@ -112,10 +96,6 @@ class FriendsViewModel : ViewModel() {
         )
     }
 
-    /**
-     * Dado la ubicación actual del usuario, encuentra el edificio universitario
-     * más cercano y devuelve una URL de navegación hacia él en Google Maps.
-     */
     fun construirUrlEdificioMasCercano(miLat: Double, miLng: Double): Pair<String, String> {
         val edificioCercano = edificios.minByOrNull { edificio ->
             val dLat = edificio.lat - miLat
@@ -133,9 +113,14 @@ class FriendsViewModel : ViewModel() {
 
     fun onFindCommonFreeTime() {
         viewModelScope.launch {
-            val usuario = Usuario.getInstance()
-            val result = UsuarioRepository.getAmigos(usuario.id)
+            // Fix: proteger acceso al singleton también aquí
+            val usuario = try {
+                Usuario.getInstance()
+            } catch (e: IllegalStateException) {
+                return@launch
+            }
 
+            val result = UsuarioRepository.getAmigos(usuario.id)
             if (result.isFailure) return@launch
 
             val amigos = result.getOrDefault(emptyList())

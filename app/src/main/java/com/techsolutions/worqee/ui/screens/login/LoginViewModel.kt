@@ -17,7 +17,6 @@ sealed class LoginUiState {
     object Loading : LoginUiState()
     object Success : LoginUiState()
     data class Error(val message: String) : LoginUiState()
-    // Nuevo: bloqueo temporal por demasiados intentos fallidos
     data class Lockout(val segundosRestantes: Int) : LoginUiState()
 }
 
@@ -27,13 +26,12 @@ class LoginViewModel : ViewModel() {
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
     val uiState: StateFlow<LoginUiState> = _uiState
 
-    // Contador de intentos fallidos — se resetea cuando el lockout termina
     private var failedAttempts = 0
     private val LOCKOUT_MAX_ATTEMPTS = 3
     private val LOCKOUT_DURATION_SECONDS = 30
 
     fun login(gmail: String, password: String, context: Context) {
-        // Bloqueado: ignorar el intento
+
         if (_uiState.value is LoginUiState.Lockout) return
 
         if (gmail.isBlank() || password.isBlank()) {
@@ -55,9 +53,12 @@ class LoginViewModel : ViewModel() {
                     val prefs = context.getSharedPreferences("worqee_prefs", Context.MODE_PRIVATE)
                     prefs.edit().putString("userId", userId).apply()
 
-                    UsuarioRepository.cargarSingletonUsuario(userId)
+                    val cargado = UsuarioRepository.cargarSingletonUsuario(userId)
 
-                    // Login exitoso: resetear contador
+                    if (cargado) {
+                        UsuarioRepository.guardarEnCaché(Usuario.getInstance())
+                    }
+
                     failedAttempts = 0
                     _uiState.value = LoginUiState.Success
                 } else {
@@ -76,10 +77,6 @@ class LoginViewModel : ViewModel() {
         }
     }
 
-    /**
-     * Registra un intento fallido. Si se alcanzan los intentos máximos,
-     * inicia el countdown de bloqueo; si no, muestra el error normal.
-     */
     private fun registrarFallo(mensaje: String) {
         failedAttempts++
         if (failedAttempts >= LOCKOUT_MAX_ATTEMPTS) {
@@ -90,10 +87,6 @@ class LoginViewModel : ViewModel() {
         }
     }
 
-    /**
-     * Inicia el countdown de bloqueo. Emite Lockout(n) cada segundo
-     * hasta llegar a 0, luego vuelve a Idle y resetea el contador.
-     */
     private fun iniciarLockout() {
         viewModelScope.launch {
             for (segundos in LOCKOUT_DURATION_SECONDS downTo 1) {
@@ -138,7 +131,14 @@ class LoginViewModel : ViewModel() {
                     if (usuarioCreado != null) {
                         val prefs = context.getSharedPreferences("worqee_prefs", Context.MODE_PRIVATE)
                         prefs.edit().putString("userId", usuarioCreado.id).apply()
-                        UsuarioRepository.cargarSingletonUsuario(usuarioCreado.id)
+
+                        val cargado = UsuarioRepository.cargarSingletonUsuario(usuarioCreado.id)
+
+
+                        if (cargado) {
+                            UsuarioRepository.guardarEnCaché(Usuario.getInstance())
+                        }
+
                         _uiState.value = LoginUiState.Success
                     }
                 } else {
@@ -152,7 +152,6 @@ class LoginViewModel : ViewModel() {
     }
 
     fun resetState() {
-        // No resetear si hay un lockout activo
         if (_uiState.value !is LoginUiState.Lockout) {
             _uiState.value = LoginUiState.Idle
         }

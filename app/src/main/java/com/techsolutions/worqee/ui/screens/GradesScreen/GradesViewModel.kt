@@ -13,7 +13,8 @@ class GradesViewModel : ViewModel() {
     private val _materias = MutableStateFlow<List<Materia>>(emptyList())
     val materiasState: StateFlow<List<Materia>> = _materias.asStateFlow()
 
-    // Mapa: nombre de materia -> nota necesaria calculada
+    // Key: materia.id (no nombre, para evitar colisiones con materias duplicadas)
+    // Valores especiales: -1f = sin objetivo, -2f = sin actividades
     private val _notasNecesarias = MutableStateFlow<Map<String, Float>>(emptyMap())
     val notasNecesarias: StateFlow<Map<String, Float>> = _notasNecesarias.asStateFlow()
 
@@ -38,13 +39,24 @@ class GradesViewModel : ViewModel() {
     }
 
     fun refresh() {
-        // Limpiamos las notas necesarias para que se recalculen con datos frescos
         _notasNecesarias.value = emptyMap()
         loadMaterias()
     }
 
     fun calcularNotaNecesaria(materia: Materia): Float {
-        // Firebase Performance trace — mide este cálculo en el analytics system
+        // Caso 1: sin objetivo definido
+        if (materia.objetivo <= 0.0) {
+            _notasNecesarias.value = _notasNecesarias.value + (materia.id to -1f)
+            return -1f
+        }
+
+        // Caso 2: sin actividades — no hay notas que respalden un "ya pasaste"
+        if (materia.notas.isEmpty()) {
+            _notasNecesarias.value = _notasNecesarias.value + (materia.id to -2f)
+            return -2f
+        }
+
+        // Firebase Performance trace
         val trace = FirebasePerformance.getInstance().newTrace("calcular_nota_necesaria")
         trace.start()
 
@@ -55,7 +67,8 @@ class GradesViewModel : ViewModel() {
         val porcentajeRestante = 100f - porcentajeUsado
 
         val resultado = if (porcentajeRestante <= 0f) {
-            0f
+            // Ya se calificó todo — comparar promedio vs objetivo
+            if (notaActual >= materia.objetivo.toFloat()) 0f else notaActual
         } else {
             val notaFaltante = (materia.objetivo.toFloat() - notaActual) / (porcentajeRestante / 100f)
             notaFaltante.coerceIn(0f, 5f)
@@ -65,17 +78,13 @@ class GradesViewModel : ViewModel() {
         val tiempoTranscurrido = fin - inicio
         tiemposCalculo.add(tiempoTranscurrido)
 
-        // Atributo custom: materia calculada
         trace.putAttribute("materia", materia.nombre.take(100))
-        // Métrica custom: tiempo local en ms (para correlacionar con la BusinessQuestionCard)
         trace.putMetric("tiempo_ms", tiempoTranscurrido)
-        // Métrica custom: 1 si supera el objetivo de 100ms, 0 si no
         trace.putMetric("supera_100ms", if (tiempoTranscurrido > 100L) 1L else 0L)
-
         trace.stop()
 
-        // Actualizar StateFlow para refrescar la UI
-        _notasNecesarias.value = _notasNecesarias.value + (materia.nombre to resultado)
+        // Key por id, no por nombre
+        _notasNecesarias.value = _notasNecesarias.value + (materia.id to resultado)
 
         return resultado
     }

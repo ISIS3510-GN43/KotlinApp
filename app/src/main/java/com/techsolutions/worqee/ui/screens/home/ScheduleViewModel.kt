@@ -16,8 +16,14 @@ class ScheduleViewModel : ViewModel() {
         loadSchedule()
     }
 
-    private fun loadSchedule() {
-        val usuario = Usuario.getInstance()
+    fun loadSchedule() {
+        // Protegemos el acceso al singleton — si aún no está listo, salimos sin crashear
+        val usuario = try {
+            Usuario.getInstance()
+        } catch (e: IllegalStateException) {
+            return
+        }
+
         val horarioActivo = usuario.horarios.firstOrNull { it.activo }
             ?: usuario.horarios.firstOrNull()
 
@@ -46,7 +52,6 @@ class ScheduleViewModel : ViewModel() {
         } else {
             ScheduleViewMode.DAY
         }
-
         _uiState.value = _uiState.value.copy(viewMode = newMode)
     }
 }
