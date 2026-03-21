@@ -147,9 +147,12 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
             )
             OutlinedTextField(
                 value = objetivo,
-                onValueChange = {
-                    objetivo = it
-                    viewModel.actualizarObjetivo(it)
+                onValueChange = { input ->
+                    val num = input.toFloatOrNull()
+                    if (input.isEmpty() || (num != null && num in 0f..5f)) {
+                        objetivo = input
+                        viewModel.actualizarObjetivo(input)
+                    }
                 },
                 label = { Text("Target grade") },
                 modifier = Modifier.fillMaxWidth(),
@@ -183,14 +186,24 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = nota,
-                    onValueChange = { nota = it },
+                    onValueChange = { input ->
+                        val num = input.toFloatOrNull()
+                        if (input.isEmpty() || (num != null && num in 0f..5f)) {
+                            nota = input
+                        }
+                    },
                     label = { Text("Grade") },
                     modifier = Modifier.weight(1f),
                     colors = textFieldColors
                 )
                 OutlinedTextField(
                     value = porcentaje,
-                    onValueChange = { porcentaje = it },
+                    onValueChange = { input ->
+                        val num = input.toFloatOrNull()
+                        if (input.isEmpty() || (num != null && num in 0.1f..100f)) {
+                            porcentaje = input
+                        }
+                    },
                     label = { Text("Weight %") },
                     modifier = Modifier.weight(1f),
                     colors = textFieldColors
