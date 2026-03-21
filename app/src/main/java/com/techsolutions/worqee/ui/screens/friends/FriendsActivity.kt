@@ -23,7 +23,7 @@ class FriendsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Necesario para que UsuarioRepository pueda leer la caché
+        // Patron Repository - sin esto no se puede leer el cache
         LocalStorageManager.init(applicationContext)
 
         setContent {

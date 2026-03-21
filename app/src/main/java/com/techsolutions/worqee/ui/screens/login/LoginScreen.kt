@@ -159,7 +159,7 @@ fun LoginScreen(
             value = password,
             onValueChange = {
                 password = it
-                passwordError = null // Limpiar error al editar
+                passwordError = null
             },
             label = { Text("Contraseña") },
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),

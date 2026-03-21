@@ -18,6 +18,8 @@ import com.techsolutions.worqee.ui.screens.home.ScheduleScreen
 import com.techsolutions.worqee.ui.screens.login.LoginScreen
 import com.techsolutions.worqee.ui.theme.WorqeeTheme
 
+
+//IMportante: Cargar aqui, para no depender de crear un activity por screen.
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

@@ -43,7 +43,7 @@ fun FriendsScreen(
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
     val context = LocalContext.current
 
-    // Launcher de permiso GPS → al concederse, navega al edificio más cercano
+    // permiso GPS
     val locationLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
@@ -114,7 +114,6 @@ fun FriendsScreen(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Search bar
             item {
                 Spacer(modifier = Modifier.height(4.dp))
                 OutlinedTextField(
@@ -128,7 +127,7 @@ fun FriendsScreen(
                 )
             }
 
-            // Lista de amigos — solo botón Message, sin ícono de ubicación
+            // Lista de amigos — solo botón Message, sin ícono de ubicación. Futuros sprints, implementar esto.
             items(allFriends) { friend ->
                 FriendCard(
                     friend = friend,
@@ -136,7 +135,6 @@ fun FriendsScreen(
                 )
             }
 
-            // Resultado del hueco en común
             uiState.commonFreeTimeResult?.let { result ->
                 item {
                     Card(
@@ -156,7 +154,6 @@ fun FriendsScreen(
                 }
             }
 
-            // Botón GPS → edificio universitario más cercano
             item {
                 Button(
                     onClick = { navegarAlEdificioMasCercano() },
@@ -175,7 +172,6 @@ fun FriendsScreen(
                 }
             }
 
-            // Botón Find Best Free Time
             item {
                 Button(
                     onClick = { viewModel.onFindCommonFreeTime() },
@@ -224,7 +220,6 @@ fun FriendCard(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Avatar con inicial del nombre
             Box(
                 modifier = Modifier
                     .size(44.dp)
@@ -262,8 +257,7 @@ fun FriendCard(
                     )
                 }
             }
-
-            // Solo botón Message — sin ícono de ubicación
+            //Mismo comentario que arriba, sprint futuros.
             if (onMessage != null) {
                 TextButton(onClick = onMessage) {
                     Text("Message", color = MaterialTheme.colorScheme.primary)

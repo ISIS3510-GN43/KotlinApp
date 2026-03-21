@@ -256,7 +256,7 @@ fun DayChip(
             color = dayColor,
             maxLines = 1,
             softWrap = false,
-            overflow = TextOverflow.Visible  // o puedes usar AutoSize si usas Compose 1.7+
+            overflow = TextOverflow.Visible
         )
     }
 }
