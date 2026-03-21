@@ -10,11 +10,18 @@ import com.techsolutions.worqee.ui.theme.WorqeeTheme
 class SubjectGradesActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val materiaId = intent.getStringExtra("materiaId")
         val materiaNombre = intent.getStringExtra("materiaNombre")
+
         val usuario = Usuario.getInstance()
         val horario = usuario.horarios.firstOrNull { it.activo }
             ?: usuario.horarios.firstOrNull()
-        val materia = horario?.materias?.find { it.nombre == materiaNombre }
+
+
+        val materia = horario?.materias?.find { it.id == materiaId }
+            ?: horario?.materias?.find { it.nombre == materiaNombre }
+
         if (materia != null) {
             val factory = SubjectGradesViewModelFactory(materia)
             val viewModel: SubjectGradesViewModel by viewModels { factory }

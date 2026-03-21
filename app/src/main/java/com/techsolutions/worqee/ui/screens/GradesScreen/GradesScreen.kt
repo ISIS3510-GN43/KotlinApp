@@ -22,29 +22,26 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.techsolutions.worqee.models.Materia
+import com.techsolutions.worqee.ui.screens.GradesScreen.subjectGrades.SubjectGradesActivity
+import com.techsolutions.worqee.ui.screens.GradesScreen.viewmodel.GradesViewModel
 import com.techsolutions.worqee.ui.theme.BackgroundLight
 import com.techsolutions.worqee.ui.theme.PrimaryActionBlue
 import com.techsolutions.worqee.ui.theme.SurfaceLight
 import com.techsolutions.worqee.ui.theme.TextPrimary
-import androidx.compose.ui.graphics.Color
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import com.techsolutions.worqee.ui.screens.GradesScreen.subjectGrades.SubjectGradesActivity
-import com.techsolutions.worqee.ui.screens.GradesScreen.viewmodel.GradesViewModel
+import com.techsolutions.worqee.ui.theme.TextSecondary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,6 +49,8 @@ fun GradesScreen(viewModel: GradesViewModel) {
 
     val context = LocalContext.current
     val materias by viewModel.materiasState.collectAsState()
+    // StateFlow del ViewModel — se actualiza al volver de SubjectGrades
+    val notasNecesarias by viewModel.notasNecesarias.collectAsState()
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.refresh()
@@ -90,10 +89,12 @@ fun GradesScreen(viewModel: GradesViewModel) {
             items(materias) { materia ->
                 MateriaProgressRow(
                     materia = materia,
+                    // Key por id para evitar colisiones con materias de nombre duplicado
+                    notaNecesaria = notasNecesarias[materia.id],
                     onCalcularNota = { viewModel.calcularNotaNecesaria(materia) },
-
                     onClick = {
                         val intent = Intent(context, SubjectGradesActivity::class.java)
+                        intent.putExtra("materiaId", materia.id)
                         intent.putExtra("materiaNombre", materia.nombre)
                         context.startActivity(intent)
                     }
@@ -102,7 +103,8 @@ fun GradesScreen(viewModel: GradesViewModel) {
             item {
                 BusinessQuestionCard(
                     promedio = viewModel.obtenerPromedioTiempoCalculo(),
-                    superaObjetivo = viewModel.superaObjetivo100ms())
+                    superaObjetivo = viewModel.superaObjetivo100ms()
+                )
             }
         }
     }
@@ -111,12 +113,12 @@ fun GradesScreen(viewModel: GradesViewModel) {
 @Composable
 fun MateriaProgressRow(
     materia: Materia,
-    onCalcularNota: () -> Float,
+    notaNecesaria: Float?,
+    onCalcularNota: () -> Unit,
     onClick: () -> Unit
 ) {
     val themeBlue = PrimaryActionBlue
     val progress = materia.calcularProgreso()
-    var notaNecesaria by remember {mutableStateOf<Float?>(null) }
 
     Card(
         modifier = Modifier
@@ -158,32 +160,53 @@ fun MateriaProgressRow(
                 color = themeBlue,
                 trackColor = themeBlue.copy(alpha = 0.2f)
             )
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                TextButton(onClick = {
-
-                    notaNecesaria = onCalcularNota()
-                }) {
-                    Text("¿Qué necesito para pasar?", style = MaterialTheme.typography.bodySmall)
+                TextButton(onClick = { onCalcularNota() }) {
+                    Text(
+                        "¿Qué necesito para pasar?",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
+                    )
                 }
 
-
                 notaNecesaria?.let { nota ->
-                    Text(
-                        text = if (nota <= 0f) "¡Ya pasaste!" else "Necesitas: ${"%.1f".format(nota)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (nota <= 0f) Color.Green else TextPrimary
-                    )
+                    when {
+                        // Sin objetivo definido
+                        nota == -1f -> Text(
+                            text = "Define un objetivo primero",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                        // Sin actividades
+                        nota == -2f -> Text(
+                            text = "Sin actividades aún",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                        // Ya pasó
+                        nota <= 0f -> Text(
+                            text = "¡Ya pasaste!",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFF2E7D32)
+                        )
+                        // Nota necesaria normal
+                        else -> Text(
+                            text = "Necesitas: ${"%.1f".format(nota)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextPrimary
+                        )
+                    }
                 }
             }
         }
     }
 }
 
-//
 @Composable
 fun BusinessQuestionCard(promedio: Long, superaObjetivo: Boolean) {
 
