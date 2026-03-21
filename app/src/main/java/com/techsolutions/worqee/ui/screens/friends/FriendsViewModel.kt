@@ -10,6 +10,7 @@ import com.techsolutions.worqee.models.Usuario
 import com.techsolutions.worqee.repository.UsuarioRepository
 import kotlinx.coroutines.launch
 import kotlin.math.sqrt
+import android.util.Log
 
 data class EdificioUniversidad(
     val nombre: String,
@@ -39,7 +40,6 @@ class FriendsViewModel : ViewModel() {
 
     private fun loadFriends() {
         viewModelScope.launch {
-            // Fix: proteger acceso al singleton — si aún no está listo, salir sin crashear
             val usuario = try {
                 Usuario.getInstance()
             } catch (e: IllegalStateException) {
@@ -51,12 +51,63 @@ class FriendsViewModel : ViewModel() {
 
             val amigos = result.getOrDefault(emptyList())
 
+            val ahora = java.util.Calendar.getInstance()
+            val diaActual = when (ahora.get(java.util.Calendar.DAY_OF_WEEK)) {
+                java.util.Calendar.MONDAY    -> Dia.LUNES
+                java.util.Calendar.TUESDAY   -> Dia.MARTES
+                java.util.Calendar.WEDNESDAY -> Dia.MIERCOLES
+                java.util.Calendar.THURSDAY  -> Dia.JUEVES
+                java.util.Calendar.FRIDAY    -> Dia.VIERNES
+                else -> null
+            }
+
+            val horaActual = ahora.get(java.util.Calendar.HOUR_OF_DAY) * 100 +
+                    ahora.get(java.util.Calendar.MINUTE)
+
             val allFriends = amigos.mapIndexed { index, amigo ->
+                val horarioActivo = amigo.horarios.firstOrNull { it.activo }
+                    ?: amigo.horarios.firstOrNull()
+
+                val status = if (horarioActivo == null) {
+                    // Business Rule: Siempre esta libre si no tiene horario
+                    FriendStatus.AVAILABLE
+                } else if (diaActual == null) {
+                    // Business Rule: Fin de semana
+                    FriendStatus.AVAILABLE
+                } else {
+                    val estaOcupado = horarioActivo.materias.any { materia ->
+                        materia.dias.forEachIndexed { i, dia ->
+                            if (dia == diaActual) {
+                                val inicio = materia.horaInicio.getOrElse(i) { 0 }
+                                val fin    = materia.horaFin.getOrElse(i) { 0 }
+                                if (horaActual in inicio until fin) return@any true
+                            }
+                        }
+                        false
+                    }
+                    if (estaOcupado) FriendStatus.BUSY else FriendStatus.AVAILABLE
+                }
+
+                val freeAtLabel = if (status == FriendStatus.BUSY) {
+                    val proximaLibre = horarioActivo?.materias
+                        ?.flatMap { materia ->
+                            materia.dias.mapIndexed { i, dia ->
+                                Pair(dia, materia.horaFin.getOrElse(i) { 0 })
+                            }
+                        }
+                        ?.filter { (dia, fin) -> dia == diaActual && fin > horaActual }
+                        ?.minByOrNull { it.second }
+                        ?.second
+
+                    if (proximaLibre != null) "Free at ${formatHora(proximaLibre)}" else "Busy"
+                } else null
+
                 FriendUiModel(
                     id = amigo.id,
                     name = amigo.username,
                     avatarUrl = amigo.foto,
-                    status = FriendStatus.AVAILABLE,
+                    status = status,
+                    freeAtLabel = freeAtLabel,
                     lat = 4.6097 + (index * 0.01),
                     lng = -74.0817 + (index * 0.01)
                 )
@@ -113,7 +164,6 @@ class FriendsViewModel : ViewModel() {
 
     fun onFindCommonFreeTime() {
         viewModelScope.launch {
-            // Fix: proteger acceso al singleton también aquí
             val usuario = try {
                 Usuario.getInstance()
             } catch (e: IllegalStateException) {
@@ -140,8 +190,9 @@ class FriendsViewModel : ViewModel() {
                     }
                 } ?: emptyList()
             }
+            Log.i("Bloques", "$bloquesOcupados")
 
-            val franjas = (600..2100 step 100).map { hora ->
+            val franjas = (800..2000 step 100).map { hora ->
                 val diasSemana = listOf(Dia.LUNES, Dia.MARTES, Dia.MIERCOLES, Dia.JUEVES, Dia.VIERNES)
                 diasSemana.map { dia ->
                     val ocupados = bloquesOcupados.count { bloque ->

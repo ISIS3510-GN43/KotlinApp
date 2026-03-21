@@ -171,7 +171,7 @@ fun FriendsScreen(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Ir al edificio más cercano")
+                    Text("Go to the nearest building")
                 }
             }
 
