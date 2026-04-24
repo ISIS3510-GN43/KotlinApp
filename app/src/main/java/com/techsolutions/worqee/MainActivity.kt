@@ -17,13 +17,14 @@ import com.techsolutions.worqee.storage.LocalStorageManager
 import com.techsolutions.worqee.ui.screens.home.ScheduleScreen
 import com.techsolutions.worqee.ui.screens.login.LoginScreen
 import com.techsolutions.worqee.ui.theme.WorqeeTheme
+import com.techsolutions.worqee.analytics.GradeUsageTracker
 
 
 //IMportante: Cargar aqui, para no depender de crear un activity por screen.
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        GradeUsageTracker.init(this)
         LocalStorageManager.init(applicationContext)
 
         val prefs = getSharedPreferences("worqee_prefs", Context.MODE_PRIVATE)

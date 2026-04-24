@@ -2,6 +2,7 @@ package com.techsolutions.worqee.ui.screens.GradesScreen.subjectGrades
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import com.techsolutions.worqee.analytics.GradeUsageTracker
 import com.techsolutions.worqee.models.Materia
 import com.techsolutions.worqee.models.Nota
 import com.techsolutions.worqee.models.Usuario
@@ -34,6 +35,13 @@ class SubjectGradesViewModel(
         _materiaState.value = materia.copy(notas = materia.notas.toMutableList())
         actualizarEstadoRiesgo()
         guardarEnCaché()
+        // se registra el uso de la función para responder la BQ
+        GradeUsageTracker.trackGradeAdded(
+            materiaId     = materia.id,
+            materiaNombre = materia.nombre,
+            notaTitulo    = nombre
+        )
+
         Log.d("SubjectGradesViewModel", "Actividad agregada: $nombre - Guardada en caché")
     }
 
@@ -43,6 +51,14 @@ class SubjectGradesViewModel(
         _materiaState.value = materia.copy(notas = materia.notas.toMutableList())
         actualizarEstadoRiesgo()
         guardarEnCaché()
+
+        // se registra el uso de la función para responder la BQ
+        GradeUsageTracker.trackObjectiveUpdated(
+            materiaId     = materia.id,
+            materiaNombre = materia.nombre,
+            nuevoObjetivo = objValue
+        )
+
         Log.d("SubjectGradesViewModel", "Objetivo actualizado a: $objValue - Guardado en caché")
     }
 
