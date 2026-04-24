@@ -4,8 +4,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import com.techsolutions.worqee.models.Usuario
+import com.techsolutions.worqee.models.clases.Usuario
 import com.techsolutions.worqee.ui.theme.WorqeeTheme
+import com.techsolutions.worqee.viewModel.SubjectGradesViewModel
+import com.techsolutions.worqee.viewModel.SubjectGradesViewModelFactory
 
 class SubjectGradesActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

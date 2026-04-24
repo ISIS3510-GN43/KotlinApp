@@ -34,6 +34,7 @@ import com.techsolutions.worqee.MainActivity
 import com.techsolutions.worqee.ui.components.BottomNavBar
 import com.techsolutions.worqee.ui.components.NavBarItem
 import com.techsolutions.worqee.ui.screens.GradesScreen.GradesActivity
+import com.techsolutions.worqee.viewModel.FriendsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

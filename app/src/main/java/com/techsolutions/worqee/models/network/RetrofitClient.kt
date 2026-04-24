@@ -1,4 +1,4 @@
-package com.techsolutions.worqee.network
+package com.techsolutions.worqee.models.network
 
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor

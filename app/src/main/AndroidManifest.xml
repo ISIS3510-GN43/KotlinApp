@@ -12,21 +12,23 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        android:screenOrientation="portrait"
         android:theme="@style/Theme.Worqee"
         tools:targetApi="31">
         <activity
             android:name=".MainActivity"
+            android:launchMode="singleInstance"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.Worqee">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity android:name=".ui.screens.GradesScreen.GradesActivity" />
-        <activity android:name=".ui.screens.friends.FriendsActivity" />
+        <activity android:name=".ui.screens.friends.FriendsFragment" />
         <activity android:name=".ui.screens.GradesScreen.subjectGrades.SubjectGradesActivity" />
     </application>
 

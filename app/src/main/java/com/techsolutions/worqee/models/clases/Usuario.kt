@@ -1,4 +1,4 @@
-package com.techsolutions.worqee.models
+package com.techsolutions.worqee.models.clases
 
 class Usuario(
     var id: String = "",
@@ -73,7 +73,7 @@ class Usuario(
                     ?: emptyList<String>()).toMutableList(),
                 horarios = ((map["horarios"] as? List<*>)?.mapNotNull {
                     @Suppress("UNCHECKED_CAST")
-                    Horario.fromJson(it as Map<String, Any?>)
+                    (Horario.fromJson(it as Map<String, Any?>))
                 } ?: emptyList<Horario>()).toMutableList(),
                 solicitudes = ((map["solicitudes"] as? List<*>)?.mapNotNull { it as? String }
                     ?: emptyList<String>()).toMutableList(),

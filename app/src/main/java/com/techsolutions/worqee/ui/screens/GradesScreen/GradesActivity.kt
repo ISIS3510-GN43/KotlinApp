@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import com.techsolutions.worqee.ui.screens.GradesScreen.viewmodel.GradesViewModel
+import com.techsolutions.worqee.viewModel.GradesViewModel
 import com.techsolutions.worqee.ui.theme.WorqeeTheme
 
 class GradesActivity : ComponentActivity() {

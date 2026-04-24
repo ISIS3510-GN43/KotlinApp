@@ -1,16 +1,19 @@
-package com.techsolutions.worqee.ui.screens.friends
+package com.techsolutions.worqee.viewModel
 
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import androidx.lifecycle.viewModelScope
-import com.techsolutions.worqee.models.Dia
-import com.techsolutions.worqee.models.Usuario
-import com.techsolutions.worqee.repository.UsuarioRepository
+import com.techsolutions.worqee.models.clases.Dia
+import com.techsolutions.worqee.models.clases.Usuario
+import com.techsolutions.worqee.models.repository.UsuarioRepository
 import kotlinx.coroutines.launch
 import kotlin.math.sqrt
 import android.util.Log
+import com.techsolutions.worqee.ui.screens.friends.FriendStatus
+import com.techsolutions.worqee.ui.screens.friends.FriendUiModel
+import com.techsolutions.worqee.ui.screens.friends.FriendsUiState
 
 data class EdificioUniversidad(
     val nombre: String,
@@ -45,7 +48,6 @@ class FriendsViewModel : ViewModel() {
             } catch (e: IllegalStateException) {
                 return@launch
             }
-
             val result = UsuarioRepository.getAmigos(usuario.id)
             if (result.isFailure) return@launch
 
@@ -101,6 +103,7 @@ class FriendsViewModel : ViewModel() {
 
                     if (proximaLibre != null) "Free at ${formatHora(proximaLibre)}" else "Busy"
                 } else null
+
 
                 FriendUiModel(
                     id = amigo.id,

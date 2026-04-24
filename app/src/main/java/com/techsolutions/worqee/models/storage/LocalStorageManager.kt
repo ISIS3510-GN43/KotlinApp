@@ -1,10 +1,10 @@
-package com.techsolutions.worqee.storage
+package com.techsolutions.worqee.models.storage
 
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import com.google.gson.Gson
-import com.techsolutions.worqee.models.Usuario
+import com.techsolutions.worqee.models.clases.Usuario
 
 object LocalStorageManager {
     private const val PREFS_NAME = "worqee_prefs"

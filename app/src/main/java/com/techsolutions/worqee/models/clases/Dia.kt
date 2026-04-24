@@ -1,4 +1,4 @@
-package com.techsolutions.worqee.models
+package com.techsolutions.worqee.models.clases
 
 enum class Dia {
     LUNES,

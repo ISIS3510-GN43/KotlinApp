@@ -38,12 +38,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.techsolutions.worqee.models.Nota
+import com.techsolutions.worqee.models.clases.Nota
 import com.techsolutions.worqee.ui.theme.BackgroundLight
 import com.techsolutions.worqee.ui.theme.PrimaryActionBlue
 import com.techsolutions.worqee.ui.theme.SurfaceLight
 import com.techsolutions.worqee.ui.theme.TextPrimary
 import com.techsolutions.worqee.ui.theme.TextSecondary
+import com.techsolutions.worqee.viewModel.SubjectGradesViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

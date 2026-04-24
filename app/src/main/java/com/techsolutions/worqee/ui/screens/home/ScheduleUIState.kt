@@ -1,7 +1,7 @@
 package com.techsolutions.worqee.ui.screens.home
 
-import com.techsolutions.worqee.models.Dia
-import com.techsolutions.worqee.models.Materia
+import com.techsolutions.worqee.models.clases.Dia
+import com.techsolutions.worqee.models.clases.Materia
 
 enum class ScheduleViewMode {
     DAY, WEEK

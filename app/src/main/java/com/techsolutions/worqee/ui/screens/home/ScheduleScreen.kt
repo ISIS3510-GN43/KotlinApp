@@ -24,7 +24,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.MoreVert
-import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -42,17 +41,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.techsolutions.worqee.models.Dia
-import com.techsolutions.worqee.models.Materia
+import com.techsolutions.worqee.models.clases.Dia
+import com.techsolutions.worqee.models.clases.Materia
 import com.techsolutions.worqee.ui.screens.GradesScreen.GradesActivity
-import com.techsolutions.worqee.ui.screens.friends.FriendsActivity
+import com.techsolutions.worqee.ui.fragments.FriendsFragment
 import com.techsolutions.worqee.ui.theme.AntiFlashWhite
 import com.techsolutions.worqee.ui.theme.BackgroundLight
 import com.techsolutions.worqee.ui.theme.BorderLight
-import com.techsolutions.worqee.ui.theme.CaribbeanCurrent
 import com.techsolutions.worqee.ui.theme.LinkBlue
 import com.techsolutions.worqee.ui.theme.Night
 import com.techsolutions.worqee.ui.theme.TextSecondary
@@ -68,16 +65,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.google.firebase.auth.FirebaseAuth
 import androidx.core.content.edit
-import com.techsolutions.worqee.models.Usuario
-import com.techsolutions.worqee.storage.LocalStorageManager
+import com.techsolutions.worqee.models.clases.Usuario
+import com.techsolutions.worqee.models.storage.LocalStorageManager
 import androidx.compose.ui.text.style.TextOverflow
+import com.techsolutions.worqee.viewModel.ScheduleViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleScreen(
 
-
+    onNavigateToFriends: () -> Unit = {},
     onLogout: () -> Unit = {},
     viewModel: ScheduleViewModel = viewModel()
 ) {
@@ -143,10 +141,7 @@ fun ScheduleScreen(
                             context.startActivity(intent)
                         }
                         NavBarItem.SCHEDULE -> { }
-                        NavBarItem.FRIENDS -> {
-                            val intent = Intent(context, FriendsActivity::class.java)
-                            context.startActivity(intent)
-                        }
+                        NavBarItem.FRIENDS -> onNavigateToFriends()
                     }
                 }
             )

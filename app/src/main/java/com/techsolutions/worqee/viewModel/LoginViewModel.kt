@@ -1,11 +1,11 @@
-package com.techsolutions.worqee.ui.screens.login
+package com.techsolutions.worqee.viewModel
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
-import com.techsolutions.worqee.models.Usuario
-import com.techsolutions.worqee.repository.UsuarioRepository
+import com.techsolutions.worqee.models.clases.Usuario
+import com.techsolutions.worqee.models.repository.UsuarioRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -83,7 +83,8 @@ class LoginViewModel : ViewModel() {
             iniciarLockout()
         } else {
             val intentosRestantes = LOCKOUT_MAX_ATTEMPTS - failedAttempts
-            _uiState.value = LoginUiState.Error("$mensaje. Te quedan $intentosRestantes intento(s).")
+            _uiState.value =
+                LoginUiState.Error("$mensaje. Te quedan $intentosRestantes intento(s).")
         }
     }
 

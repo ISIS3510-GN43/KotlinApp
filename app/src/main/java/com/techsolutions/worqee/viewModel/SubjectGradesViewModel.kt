@@ -1,11 +1,11 @@
-package com.techsolutions.worqee.ui.screens.GradesScreen.subjectGrades
+package com.techsolutions.worqee.viewModel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import com.techsolutions.worqee.models.Materia
-import com.techsolutions.worqee.models.Nota
-import com.techsolutions.worqee.models.Usuario
-import com.techsolutions.worqee.repository.UsuarioRepository
+import com.techsolutions.worqee.models.clases.Materia
+import com.techsolutions.worqee.models.clases.Nota
+import com.techsolutions.worqee.models.clases.Usuario
+import com.techsolutions.worqee.models.repository.UsuarioRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

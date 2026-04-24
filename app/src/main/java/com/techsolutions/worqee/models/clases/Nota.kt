@@ -1,4 +1,4 @@
-package com.techsolutions.worqee.models
+package com.techsolutions.worqee.models.clases
 
 data class Nota(
     var grade: Double,

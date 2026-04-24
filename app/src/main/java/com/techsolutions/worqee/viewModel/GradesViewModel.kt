@@ -1,9 +1,9 @@
-package com.techsolutions.worqee.ui.screens.GradesScreen.viewmodel
+package com.techsolutions.worqee.viewModel
 
 import androidx.lifecycle.ViewModel
 import com.google.firebase.perf.FirebasePerformance
-import com.techsolutions.worqee.models.Materia
-import com.techsolutions.worqee.models.Usuario
+import com.techsolutions.worqee.models.clases.Materia
+import com.techsolutions.worqee.models.clases.Usuario
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

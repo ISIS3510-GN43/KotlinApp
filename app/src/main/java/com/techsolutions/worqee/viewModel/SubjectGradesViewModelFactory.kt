@@ -1,8 +1,8 @@
-package com.techsolutions.worqee.ui.screens.GradesScreen.subjectGrades
+package com.techsolutions.worqee.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.techsolutions.worqee.models.Materia
+import com.techsolutions.worqee.models.clases.Materia
 
 class SubjectGradesViewModelFactory(
     private val materia: Materia

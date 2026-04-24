@@ -1,4 +1,4 @@
-package com.techsolutions.worqee.models
+package com.techsolutions.worqee.models.clases
 
 import java.time.LocalDateTime
 import java.time.ZonedDateTime

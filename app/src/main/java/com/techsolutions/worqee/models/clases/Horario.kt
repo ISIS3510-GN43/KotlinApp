@@ -1,4 +1,4 @@
-package com.techsolutions.worqee.models
+package com.techsolutions.worqee.models.clases
 
 data class Horario(
     var id: String = "",
@@ -31,7 +31,7 @@ data class Horario(
                 ultimoDia = (json["ultimoDia"] as? String)?.let { Dia.fromJson(it) },
                 materias = ((json["clases"] as? List<*>)?.mapNotNull {
                     @Suppress("UNCHECKED_CAST")
-                    Materia.fromJson(it as Map<String, Any?>)
+                    (Materia.fromJson(it as Map<String, Any?>))
                 } ?: emptyList()).toMutableList(),
                 activo = json["activo"] as? Boolean ?: false
             )

@@ -1,8 +1,8 @@
-package com.techsolutions.worqee.network
+package com.techsolutions.worqee.models.network
 
 // Service Adapter
 
-import com.techsolutions.worqee.models.Usuario
+import com.techsolutions.worqee.models.clases.Usuario
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET

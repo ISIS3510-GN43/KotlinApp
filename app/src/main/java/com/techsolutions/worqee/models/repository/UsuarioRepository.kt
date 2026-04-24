@@ -1,8 +1,8 @@
-package com.techsolutions.worqee.repository
+package com.techsolutions.worqee.models.repository
 
-import com.techsolutions.worqee.models.Usuario
-import com.techsolutions.worqee.network.RetrofitClient
-import com.techsolutions.worqee.storage.LocalStorageManager
+import com.techsolutions.worqee.models.clases.Usuario
+import com.techsolutions.worqee.models.network.RetrofitClient
+import com.techsolutions.worqee.models.storage.LocalStorageManager
 import android.util.Log
 
 object UsuarioRepository {
