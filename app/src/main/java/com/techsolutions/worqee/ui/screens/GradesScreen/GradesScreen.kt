@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,6 +28,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,6 +44,7 @@ import com.techsolutions.worqee.ui.theme.PrimaryActionBlue
 import com.techsolutions.worqee.ui.theme.SurfaceLight
 import com.techsolutions.worqee.ui.theme.TextPrimary
 import com.techsolutions.worqee.ui.theme.TextSecondary
+import com.techsolutions.worqee.utils.ConnectivityHelper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,8 +52,10 @@ fun GradesScreen(viewModel: GradesViewModel) {
 
     val context = LocalContext.current
     val materias by viewModel.materiasState.collectAsState()
-    // StateFlow del ViewModel — se actualiza al volver de SubjectGrades
     val notasNecesarias by viewModel.notasNecesarias.collectAsState()
+
+    // ✅ Detectar conectividad
+    val isOffline = remember { !ConnectivityHelper.isOnline(context) }
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.refresh()
@@ -86,10 +91,46 @@ fun GradesScreen(viewModel: GradesViewModel) {
                 .fillMaxSize()
                 .padding(padding)
         ) {
+            if (isOffline) {
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEEEE))
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.CloudOff,
+                                contentDescription = null,
+                                tint = Color(0xFFCC0000)
+                            )
+                            Column {
+                                Text(
+                                    "Sin conexión",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color(0xFFCC0000)
+                                )
+                                Text(
+                                    "Mostrando datos guardados localmente",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             items(materias) { materia ->
                 MateriaProgressRow(
                     materia = materia,
-                    // Key por id para evitar colisiones con materias de nombre duplicado
                     notaNecesaria = notasNecesarias[materia.id],
                     onCalcularNota = { viewModel.calcularNotaNecesaria(materia) },
                     onClick = {
@@ -100,6 +141,7 @@ fun GradesScreen(viewModel: GradesViewModel) {
                     }
                 )
             }
+
             item {
                 BusinessQuestionCard(
                     promedio = viewModel.obtenerPromedioTiempoCalculo(),
@@ -176,25 +218,21 @@ fun MateriaProgressRow(
 
                 notaNecesaria?.let { nota ->
                     when {
-                        // Sin objetivo definido
                         nota == -1f -> Text(
                             text = "Define un objetivo primero",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary
                         )
-                        // Sin actividades
                         nota == -2f -> Text(
                             text = "Sin actividades aún",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary
                         )
-                        // Ya pasó
                         nota <= 0f -> Text(
                             text = "¡Ya pasaste!",
                             style = MaterialTheme.typography.bodySmall,
                             color = Color(0xFF2E7D32)
                         )
-                        // Nota necesaria normal
                         else -> Text(
                             text = "Necesitas: ${"%.1f".format(nota)}",
                             style = MaterialTheme.typography.bodySmall,
