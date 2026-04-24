@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -72,6 +73,7 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
         focusedTextColor = TextPrimary,
         unfocusedTextColor = TextPrimary
     )
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -140,11 +142,7 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
                 }
             }
 
-            Text(
-                "Goal",
-                color = TextPrimary,
-                style = MaterialTheme.typography.bodyLarge
-            )
+            Text("Goal", color = TextPrimary, style = MaterialTheme.typography.bodyLarge)
             OutlinedTextField(
                 value = objetivo,
                 onValueChange = { input ->
@@ -166,11 +164,10 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
                 color = themeBlue,
                 trackColor = themeBlue.copy(alpha = 0.2f)
             )
-            Text(
-                "Current Average: %.2f".format(promedio),
-                color = TextPrimary
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+            Text("Current Average: %.2f".format(promedio), color = TextPrimary)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             Text(
                 "Add Activity",
                 style = MaterialTheme.typography.titleMedium,
@@ -228,22 +225,26 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
             ) {
                 Text("Add Activity")
             }
-            Spacer(modifier = Modifier.height(12.dp))
+
+            Spacer(modifier = Modifier.height(4.dp))
+
             Text(
                 "Activities",
                 style = MaterialTheme.typography.titleMedium,
                 color = TextPrimary
             )
+
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.weight(1f)
             ) {
-                items(materia.notas) { actividad: Nota ->
+                items(
+                    materia.notas,
+                    key = { it.titulo + it.porcentaje + it.grade }
+                ) { actividad: Nota ->
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = SurfaceLight
-                        )
+                        colors = CardDefaults.cardColors(containerColor = SurfaceLight)
                     ) {
                         Row(
                             modifier = Modifier
@@ -257,7 +258,6 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = TextPrimary
                                 )
-
                                 Text(
                                     "Weight: ${actividad.porcentaje}%",
                                     style = MaterialTheme.typography.bodySmall,
@@ -269,6 +269,13 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
                                 style = MaterialTheme.typography.titleMedium,
                                 color = TextPrimary
                             )
+                            IconButton(onClick = { viewModel.eliminarActividad(actividad) }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Delete,
+                                    contentDescription = "Eliminar actividad",
+                                    tint = PrimaryActionBlue
+                                )
+                            }
                         }
                     }
                 }

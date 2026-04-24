@@ -44,6 +44,13 @@ class SubjectGradesViewModel(
 
         Log.d("SubjectGradesViewModel", "Actividad agregada: $nombre - Guardada en caché")
     }
+    fun eliminarActividad(nota: Nota) {
+        materia.notas.remove(nota)
+        _materiaState.value = materia.copy(notas = materia.notas.toMutableList())
+        actualizarEstadoRiesgo()
+        guardarEnCaché()
+        Log.d("SubjectGradesViewModel", "Actividad eliminada: ${nota.titulo}")
+    }
 
     fun actualizarObjetivo(objetivo: String) {
         val objValue = objetivo.toDoubleOrNull() ?: 0.0
