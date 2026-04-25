@@ -17,6 +17,9 @@ import com.techsolutions.worqee.views.states.FriendsUiState
 import com.techsolutions.worqee.views.states.SendRequestStatus
 import com.techsolutions.worqee.views.states.AddFriendSearchStatus
 import com.techsolutions.worqee.views.states.FoundUserUiModel
+import com.techsolutions.worqee.models.network.RetrofitClient
+import com.techsolutions.worqee.models.clases.Metrica
+import retrofit2.Retrofit
 
 data class EdificioUniversidad(
     val nombre: String,
@@ -300,6 +303,7 @@ class FriendsViewModel : ViewModel() {
             _uiState.value = _uiState.value.copy(
                 sendRequestStatus = SendRequestStatus.LOADING
             )
+
             try {
                 val usuarioActual = try {
                     Usuario.getInstance()
@@ -311,15 +315,44 @@ class FriendsViewModel : ViewModel() {
                 }
 
                 val result = UsuarioRepository.enviarSolicitudAmistad(
-                    fromId = usuarioActual.id,
-                    toId = foundUser.uid
+                    fromId = foundUser.uid,
+                    toId = usuarioActual.id
                 )
-                _uiState.value = _uiState.value.copy(
-                    sendRequestStatus = if (result.isSuccess)
-                        SendRequestStatus.SUCCESS
-                    else
-                        SendRequestStatus.ERROR
-                )
+
+                Log.d("API_RESULT", result.toString())
+
+                if (result.isSuccess) {
+
+                    try {
+                        val metricaRequest = Metrica(
+                            Evento = "Create request",
+                            FechaActividad = getCurrentIsoDate(),
+                            IdUsuario = usuarioActual.id,
+                            Plataforma = "Kotlin"
+                        )
+
+                        val response = RetrofitClient.apiService.crearNuevaMetrica(metricaRequest)
+
+                        if (response.isSuccessful) {
+                            Log.d("METRICA", "Métrica enviada correctamente")
+                        } else {
+                            Log.e("METRICA", "Error al enviar métrica")
+                        }
+
+                    } catch (e: Exception) {
+                        Log.e("METRICA", "Exception: ${e.message}")
+                    }
+
+                    _uiState.value = _uiState.value.copy(
+                        sendRequestStatus = SendRequestStatus.SUCCESS
+                    )
+
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        sendRequestStatus = SendRequestStatus.ERROR
+                    )
+                }
+
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     sendRequestStatus = SendRequestStatus.ERROR
@@ -327,4 +360,10 @@ class FriendsViewModel : ViewModel() {
             }
         }
     }
+
+    private fun getCurrentIsoDate(): String {
+        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
+        return sdf.format(java.util.Date())
+    }
+
 }
