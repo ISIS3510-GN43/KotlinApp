@@ -1,6 +1,5 @@
 package com.techsolutions.worqee.views.screens
 
-import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -45,7 +44,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.techsolutions.worqee.models.clases.Dia
 import com.techsolutions.worqee.models.clases.Materia
-import com.techsolutions.worqee.views.fragments.GradesActivity
 import com.techsolutions.worqee.views.theme.AntiFlashWhite
 import com.techsolutions.worqee.views.theme.BackgroundLight
 import com.techsolutions.worqee.views.theme.BorderLight
@@ -74,7 +72,7 @@ import com.techsolutions.worqee.views.states.ScheduleViewMode
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleScreen(
-
+    onNavigateToGrades: () -> Unit = {},   // ← ahora es un callback como los demás
     onNavigateToFriends: () -> Unit = {},
     onLogout: () -> Unit = {},
     viewModel: ScheduleViewModel = viewModel()
@@ -82,6 +80,7 @@ fun ScheduleScreen(
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
     var mostrarMenu by remember { mutableStateOf(false) }
     val context = LocalContext.current
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -122,7 +121,6 @@ fun ScheduleScreen(
                             )
                         }
                     }
-
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
@@ -130,18 +128,13 @@ fun ScheduleScreen(
             )
         },
         bottomBar = {
-            val context = LocalContext.current
             BottomNavBar(
-                selectedItem = NavBarItem.SCHEDULE, // Cambiar según screen
-
+                selectedItem = NavBarItem.SCHEDULE,
                 onItemSelected = { item ->
                     when (item) {
-                        NavBarItem.GRADES -> {
-                            val intent = Intent(context, GradesActivity::class.java)
-                            context.startActivity(intent)
-                        }
-                        NavBarItem.SCHEDULE -> { }
-                        NavBarItem.FRIENDS -> onNavigateToFriends()
+                        NavBarItem.GRADES   -> onNavigateToGrades()   // ← callback, sin Intent
+                        NavBarItem.SCHEDULE -> Unit                    // ya estás aquí
+                        NavBarItem.FRIENDS  -> onNavigateToFriends()
                     }
                 }
             )
@@ -269,15 +262,12 @@ fun ScheduleHeaderActions(
     ) {
         Button(onClick = onToggleView) {
             Text(
-                text = if (viewMode == ScheduleViewMode.DAY) {
-                    "Vista semanal"
-                } else {
-                    "Vista diaria"
-                }
+                text = if (viewMode == ScheduleViewMode.DAY) "Vista semanal" else "Vista diaria"
             )
         }
     }
 }
+
 @Composable
 fun ScheduleTimeline(materias: List<Materia>) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -394,8 +384,6 @@ fun ClassCard(materia: Materia) {
         }
     }
 }
-
-
 
 @Composable
 fun WeeklyScheduleGrid(
