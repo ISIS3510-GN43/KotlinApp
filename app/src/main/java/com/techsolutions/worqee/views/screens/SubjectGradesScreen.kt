@@ -1,4 +1,4 @@
-package com.techsolutions.worqee.ui.screens.GradesScreen.subjectGrades
+package com.techsolutions.worqee.views.screens
 
 import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
@@ -43,12 +43,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.techsolutions.worqee.models.clases.Nota
-import com.techsolutions.worqee.ui.theme.BackgroundLight
-import com.techsolutions.worqee.ui.theme.PrimaryActionBlue
-import com.techsolutions.worqee.ui.theme.SurfaceLight
-import com.techsolutions.worqee.ui.theme.TextPrimary
-import com.techsolutions.worqee.ui.theme.TextSecondary
-import com.techsolutions.worqee.viewModel.SubjectGradesViewModel
+import com.techsolutions.worqee.views.screens.GradesScreen.subjectGrades.SubjectGradesViewModel
+import com.techsolutions.worqee.views.theme.BackgroundLight
+import com.techsolutions.worqee.views.theme.PrimaryActionBlue
+import com.techsolutions.worqee.views.theme.SurfaceLight
+import com.techsolutions.worqee.views.theme.TextPrimary
+import com.techsolutions.worqee.views.theme.TextSecondary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

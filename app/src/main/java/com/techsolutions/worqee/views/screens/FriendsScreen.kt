@@ -1,4 +1,4 @@
-package com.techsolutions.worqee.ui.screens.friends
+package com.techsolutions.worqee.views.screens
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -26,15 +26,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.outlined.PersonAdd
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.location.LocationServices
 import com.techsolutions.worqee.MainActivity
-import com.techsolutions.worqee.ui.components.BottomNavBar
-import com.techsolutions.worqee.ui.components.NavBarItem
-import com.techsolutions.worqee.ui.screens.GradesScreen.GradesActivity
+import com.techsolutions.worqee.views.components.BottomNavBar
+import com.techsolutions.worqee.views.components.NavBarItem
+import com.techsolutions.worqee.views.fragments.GradesActivity
 import com.techsolutions.worqee.viewModel.FriendsViewModel
+import com.techsolutions.worqee.views.states.AddFriendSearchStatus
+import com.techsolutions.worqee.views.states.FoundUserUiModel
+import com.techsolutions.worqee.views.states.FriendStatus
+import com.techsolutions.worqee.views.states.FriendUiModel
+import com.techsolutions.worqee.views.states.SendRequestStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -106,7 +112,20 @@ fun FriendsScreen(
                     }
                 }
             )
+            if (uiState.showAddFriendDialog) {
+                AddFriendDialog(
+                    username          = uiState.addFriendUsername,
+                    searchStatus      = uiState.addFriendSearchStatus,
+                    foundUser         = uiState.foundUser,
+                    sendStatus        = uiState.sendRequestStatus,
+                    onUsernameChange  = viewModel::onAddFriendUsernameChanged,
+                    onSearch          = viewModel::onSearchFriendByUsername,
+                    onSendRequest     = viewModel::onSendFriendRequest,
+                    onDismiss         = viewModel::onDismissAddFriendDialog
+                )
+            }
         }
+
     ) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -126,6 +145,19 @@ fun FriendsScreen(
                     shape = RoundedCornerShape(24.dp),
                     singleLine = true
                 )
+                OutlinedButton(
+                    onClick = { viewModel.onOpenAddFriendDialog() },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                        Icon(
+                            imageVector = Icons.Outlined.PersonAdd,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Add friend")
+                    }
             }
 
             // Lista de amigos — solo botón Message, sin ícono de ubicación. Futuros sprints, implementar esto.
@@ -266,4 +298,149 @@ fun FriendCard(
             }
         }
     }
+}
+@Composable
+fun AddFriendDialog(
+    username: String,
+    searchStatus: AddFriendSearchStatus,
+    foundUser: FoundUserUiModel?,
+    sendStatus: SendRequestStatus,
+    onUsernameChange: (String) -> Unit,
+    onSearch: () -> Unit,
+    onSendRequest: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val isBusy = searchStatus == AddFriendSearchStatus.LOADING
+            || sendStatus == SendRequestStatus.LOADING
+
+    AlertDialog(
+        onDismissRequest = { if (!isBusy) onDismiss() },
+        title = { Text("Add friend") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+
+                // — Campo + botón buscar —
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = username,
+                        onValueChange = onUsernameChange,
+                        label = { Text("Username") },
+                        singleLine = true,
+                        enabled = !isBusy && sendStatus != SendRequestStatus.SUCCESS,
+                        isError = searchStatus == AddFriendSearchStatus.NOT_FOUND
+                                || searchStatus == AddFriendSearchStatus.ERROR,
+                        modifier = Modifier.weight(1f)
+                    )
+                    FilledTonalButton(
+                        onClick = onSearch,
+                        enabled = username.isNotBlank() && !isBusy
+                                && sendStatus != SendRequestStatus.SUCCESS
+                    ) {
+                        Text("Search")
+                    }
+                }
+
+                // — Feedback de búsqueda —
+                when (searchStatus) {
+                    AddFriendSearchStatus.LOADING ->
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+
+                    AddFriendSearchStatus.NOT_FOUND ->
+                        Text(
+                            "User not found.",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+
+                    AddFriendSearchStatus.ERROR ->
+                        Text(
+                            "Search failed. Try again.",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+
+                    AddFriendSearchStatus.SUCCESS -> {
+                        // — Preview del usuario encontrado —
+                        foundUser?.let { user ->
+                            Card(
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                )
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.primaryContainer),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = user.username.first().uppercaseChar().toString(),
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                    }
+                                    Text(
+                                        text = user.username,
+                                        style = MaterialTheme.typography.bodyLarge
+                                    )
+                                }
+                            }
+                        }
+
+                        // — Feedback del envío —
+                        when (sendStatus) {
+                            SendRequestStatus.LOADING ->
+                                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+
+                            SendRequestStatus.SUCCESS ->
+                                Text(
+                                    "Friend request sent!",
+                                    color = Color(0xFF4CAF50),
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+
+                            SendRequestStatus.ERROR ->
+                                Text(
+                                    "Could not send request. Try again.",
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+
+                            SendRequestStatus.IDLE -> {}
+                        }
+                    }
+
+                    AddFriendSearchStatus.IDLE -> {}
+                }
+            }
+        },
+        confirmButton = {
+            // Solo aparece cuando hay un usuario encontrado y aún no se envió
+            if (foundUser != null && sendStatus != SendRequestStatus.SUCCESS) {
+                Button(
+                    onClick = onSendRequest,
+                    enabled = sendStatus != SendRequestStatus.LOADING
+                ) {
+                    Text("Send request")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isBusy) {
+                Text(if (sendStatus == SendRequestStatus.SUCCESS) "Close" else "Cancel")
+            }
+        }
+    )
 }

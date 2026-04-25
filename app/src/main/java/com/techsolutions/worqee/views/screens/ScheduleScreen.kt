@@ -1,4 +1,4 @@
-package com.techsolutions.worqee.ui.screens.home
+package com.techsolutions.worqee.views.screens
 
 import android.content.Intent
 import androidx.compose.foundation.background
@@ -45,17 +45,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.techsolutions.worqee.models.clases.Dia
 import com.techsolutions.worqee.models.clases.Materia
-import com.techsolutions.worqee.ui.screens.GradesScreen.GradesActivity
-import com.techsolutions.worqee.ui.fragments.FriendsFragment
-import com.techsolutions.worqee.ui.theme.AntiFlashWhite
-import com.techsolutions.worqee.ui.theme.BackgroundLight
-import com.techsolutions.worqee.ui.theme.BorderLight
-import com.techsolutions.worqee.ui.theme.LinkBlue
-import com.techsolutions.worqee.ui.theme.Night
-import com.techsolutions.worqee.ui.theme.TextSecondary
+import com.techsolutions.worqee.views.fragments.GradesActivity
+import com.techsolutions.worqee.views.theme.AntiFlashWhite
+import com.techsolutions.worqee.views.theme.BackgroundLight
+import com.techsolutions.worqee.views.theme.BorderLight
+import com.techsolutions.worqee.views.theme.LinkBlue
+import com.techsolutions.worqee.views.theme.Night
+import com.techsolutions.worqee.views.theme.TextSecondary
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.techsolutions.worqee.ui.components.NavBarItem
-import com.techsolutions.worqee.ui.components.BottomNavBar
+import com.techsolutions.worqee.views.components.NavBarItem
+import com.techsolutions.worqee.views.components.BottomNavBar
 import android.content.Context
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -69,6 +68,7 @@ import com.techsolutions.worqee.models.clases.Usuario
 import com.techsolutions.worqee.models.storage.LocalStorageManager
 import androidx.compose.ui.text.style.TextOverflow
 import com.techsolutions.worqee.viewModel.ScheduleViewModel
+import com.techsolutions.worqee.views.states.ScheduleViewMode
 
 
 @OptIn(ExperimentalMaterial3Api::class)

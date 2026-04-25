@@ -1,4 +1,4 @@
-package com.techsolutions.worqee.ui.screens.GradesScreen.subjectGrades
+package com.techsolutions.worqee.views.fragments
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -6,7 +6,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import com.techsolutions.worqee.models.Usuario
 import com.techsolutions.worqee.storage.PendingSyncManager
-import com.techsolutions.worqee.ui.theme.WorqeeTheme
+import com.techsolutions.worqee.views.screens.GradesScreen.subjectGrades.SubjectGradesViewModel
+import com.techsolutions.worqee.views.screens.SubjectGradesScreen
+import com.techsolutions.worqee.views.theme.WorqeeTheme
 
 class SubjectGradesActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

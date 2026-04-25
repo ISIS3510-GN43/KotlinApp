@@ -1,4 +1,4 @@
-package com.techsolutions.worqee.ui.screens.home
+package com.techsolutions.worqee.views.states
 
 import com.techsolutions.worqee.models.clases.Dia
 import com.techsolutions.worqee.models.clases.Materia

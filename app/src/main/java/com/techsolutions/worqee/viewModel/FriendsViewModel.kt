@@ -11,9 +11,9 @@ import com.techsolutions.worqee.models.repository.UsuarioRepository
 import kotlinx.coroutines.launch
 import kotlin.math.sqrt
 import android.util.Log
-import com.techsolutions.worqee.ui.screens.friends.FriendStatus
-import com.techsolutions.worqee.ui.screens.friends.FriendUiModel
-import com.techsolutions.worqee.ui.screens.friends.FriendsUiState
+import com.techsolutions.worqee.views.states.FriendStatus
+import com.techsolutions.worqee.views.states.FriendUiModel
+import com.techsolutions.worqee.views.states.FriendsUiState
 
 data class EdificioUniversidad(
     val nombre: String,

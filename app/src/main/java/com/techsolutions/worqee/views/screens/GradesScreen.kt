@@ -1,4 +1,4 @@
-package com.techsolutions.worqee.ui.screens.GradesScreen
+package com.techsolutions.worqee.views.screens
 
 import android.content.Intent
 import androidx.compose.foundation.clickable
@@ -37,13 +37,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.techsolutions.worqee.models.clases.Materia
-import com.techsolutions.worqee.ui.screens.GradesScreen.subjectGrades.SubjectGradesActivity
+import com.techsolutions.worqee.views.fragments.SubjectGradesActivity
 import com.techsolutions.worqee.viewModel.GradesViewModel
-import com.techsolutions.worqee.ui.theme.BackgroundLight
-import com.techsolutions.worqee.ui.theme.PrimaryActionBlue
-import com.techsolutions.worqee.ui.theme.SurfaceLight
-import com.techsolutions.worqee.ui.theme.TextPrimary
-import com.techsolutions.worqee.ui.theme.TextSecondary
+import com.techsolutions.worqee.views.theme.BackgroundLight
+import com.techsolutions.worqee.views.theme.PrimaryActionBlue
+import com.techsolutions.worqee.views.theme.SurfaceLight
+import com.techsolutions.worqee.views.theme.TextPrimary
+import com.techsolutions.worqee.views.theme.TextSecondary
 import com.techsolutions.worqee.utils.ConnectivityHelper
 
 @OptIn(ExperimentalMaterial3Api::class)

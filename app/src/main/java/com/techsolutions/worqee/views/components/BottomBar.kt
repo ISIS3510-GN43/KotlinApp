@@ -1,10 +1,8 @@
 // ui/widgets/BottomNavBar.kt
 
-package com.techsolutions.worqee.ui.components
+package com.techsolutions.worqee.views.components
 
-import android.content.Intent
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.People
 import androidx.compose.material.icons.outlined.School

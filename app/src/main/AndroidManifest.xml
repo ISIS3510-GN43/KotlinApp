@@ -27,9 +27,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.screens.GradesScreen.GradesActivity" />
-        <activity android:name=".ui.screens.friends.FriendsFragment" />
-        <activity android:name=".ui.screens.GradesScreen.subjectGrades.SubjectGradesActivity" />
+        <activity android:name=".views.fragments.GradesActivity" />
+        <activity android:name=".views.screens.friends.FriendsFragment" />
+        <activity android:name=".views.fragments.SubjectGradesActivity" />
     </application>
 
 </manifest>

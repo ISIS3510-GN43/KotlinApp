@@ -91,7 +91,10 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     debugImplementation("androidx.compose.ui:ui-tooling:1.6.8")
     implementation("androidx.compose.material:material-icons-extended")
-    
+
+    implementation("androidx.fragment:fragment-ktx:1.6.2")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
+
     implementation("androidx.appcompat:appcompat:1.7.0")
 
     //GPS:

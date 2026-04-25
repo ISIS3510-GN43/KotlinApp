@@ -11,16 +11,16 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.techsolutions.worqee.models.Usuario
-import com.techsolutions.worqee.repository.UsuarioRepository
-import com.techsolutions.worqee.storage.LocalStorageManager
-import com.techsolutions.worqee.ui.screens.home.ScheduleScreen
-import com.techsolutions.worqee.ui.screens.login.LoginScreen
-import com.techsolutions.worqee.ui.theme.WorqeeTheme
+import com.techsolutions.worqee.models.clases.Usuario
+import com.techsolutions.worqee.models.repository.UsuarioRepository
+import com.techsolutions.worqee.models.storage.LocalStorageManager
+import com.techsolutions.worqee.views.screens.ScheduleScreen
+import com.techsolutions.worqee.views.screens.LoginScreen
+import com.techsolutions.worqee.views.theme.WorqeeTheme
 import com.techsolutions.worqee.analytics.GradeUsageTracker
 
 
-//IMportante: Cargar aqui, para no depender de crear un activity por screen.
+//Importante: Cargar aqui, para no depender de crear un activity por screen.
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

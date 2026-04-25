@@ -1,4 +1,4 @@
-package com.techsolutions.worqee.ui.theme
+package com.techsolutions.worqee.views.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme

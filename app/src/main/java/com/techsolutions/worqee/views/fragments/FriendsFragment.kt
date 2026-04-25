@@ -1,4 +1,4 @@
-package com.techsolutions.worqee.ui.fragments
+package com.techsolutions.worqee.views.fragments
 
 import android.content.Context
 import android.os.Bundle
@@ -16,8 +16,8 @@ import androidx.fragment.app.Fragment
 import com.techsolutions.worqee.MainActivity
 import com.techsolutions.worqee.models.clases.Usuario
 import com.techsolutions.worqee.models.repository.UsuarioRepository
-import com.techsolutions.worqee.ui.screens.friends.FriendsScreen
-import com.techsolutions.worqee.ui.theme.WorqeeTheme
+import com.techsolutions.worqee.views.screens.FriendsScreen
+import com.techsolutions.worqee.views.theme.WorqeeTheme
 
 class FriendsFragment : Fragment() {
 

@@ -1,4 +1,4 @@
-package com.techsolutions.worqee.ui.screens.login
+package com.techsolutions.worqee.views.screens
 
 import android.app.DatePickerDialog
 import android.widget.Toast

@@ -3,8 +3,8 @@ package com.techsolutions.worqee.viewModel
 import androidx.lifecycle.ViewModel
 import com.techsolutions.worqee.models.clases.Dia
 import com.techsolutions.worqee.models.clases.Usuario
-import com.techsolutions.worqee.ui.screens.home.ScheduleUiState
-import com.techsolutions.worqee.ui.screens.home.ScheduleViewMode
+import com.techsolutions.worqee.views.states.ScheduleUiState
+import com.techsolutions.worqee.views.states.ScheduleViewMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
