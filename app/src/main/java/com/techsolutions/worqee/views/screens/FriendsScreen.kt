@@ -47,7 +47,10 @@ import com.techsolutions.worqee.views.states.SendRequestStatus
 fun FriendsScreen(
     onNavigateToGrades: () -> Unit = {},
     onNavigateToSchedule: () -> Unit = {},
-    viewModel: FriendsViewModel = viewModel()
+    viewModel: FriendsViewModel = viewModel(
+        factory = FriendsViewModel.factory(LocalContext.current)
+    )
+
 
 ) {
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value

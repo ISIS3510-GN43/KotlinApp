@@ -18,7 +18,11 @@ import com.techsolutions.worqee.models.clases.Usuario
 import com.techsolutions.worqee.models.repository.UsuarioRepository
 import com.techsolutions.worqee.views.screens.FriendsScreen
 import com.techsolutions.worqee.views.theme.WorqeeTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
 class FriendsFragment : Fragment() {
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
