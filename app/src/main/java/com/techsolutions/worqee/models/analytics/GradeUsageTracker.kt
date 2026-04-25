@@ -1,11 +1,11 @@
-package com.techsolutions.worqee.analytics
+package com.techsolutions.worqee.models.analytics
 
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.firestore.FirebaseFirestore
-import com.techsolutions.worqee.models.Usuario
+import com.techsolutions.worqee.models.clases.Usuario
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

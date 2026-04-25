@@ -1,68 +1,76 @@
 package com.techsolutions.worqee
 
 import android.content.Context
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.util.Log
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import androidx.appcompat.app.AppCompatActivity
 import com.techsolutions.worqee.models.clases.Usuario
 import com.techsolutions.worqee.models.repository.UsuarioRepository
 import com.techsolutions.worqee.models.storage.LocalStorageManager
-import com.techsolutions.worqee.views.screens.ScheduleScreen
-import com.techsolutions.worqee.views.screens.LoginScreen
-import com.techsolutions.worqee.views.theme.WorqeeTheme
-import com.techsolutions.worqee.analytics.GradeUsageTracker
+import com.techsolutions.worqee.views.fragments.FriendsFragment
+import com.techsolutions.worqee.views.fragments.GradesFragment
+import com.techsolutions.worqee.views.fragments.LoginFragment
+import com.techsolutions.worqee.views.fragments.ScheduleFragment
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
+class MainActivity : AppCompatActivity() {
 
-//Importante: Cargar aqui, para no depender de crear un activity por screen.
-class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        GradeUsageTracker.init(this)
+        // Bloqueo de rotación también por código
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        setContentView(R.layout.activity_main)
+
         LocalStorageManager.init(applicationContext)
 
         val prefs = getSharedPreferences("worqee_prefs", Context.MODE_PRIVATE)
         val userId = prefs.getString("userId", null)
 
-        setContent {
-            WorqeeTheme {
-                var logueado by remember { mutableStateOf<Boolean?>(null) }
-
-                LaunchedEffect(Unit) {
-                    val estaLogueado = if (userId != null) {
-                        val usuarioCache = UsuarioRepository.cargarDelCaché()
-                        if (usuarioCache != null) {
-                            // Fix: setear el singleton con los datos de la caché
-                            Usuario.setInstance(usuarioCache)
-                            Log.d("MainActivity", "Usuario cargado desde caché")
-                            true
-                        } else {
-                            Log.d("MainActivity", "Cargando usuario del servidor")
-                            UsuarioRepository.cargarSingletonUsuario(userId)
-                        }
-                    } else {
-                        false
-                    }
-                    logueado = estaLogueado
+        CoroutineScope(Dispatchers.Main).launch {
+            val logueado = if (userId != null) {
+                val usuarioCache = UsuarioRepository.cargarDelCaché()
+                if (usuarioCache != null) {
+                    Usuario.setInstance(usuarioCache)
+                    Log.d("MainActivity", "Usuario cargado desde caché")
+                    true
+                } else {
+                    Log.d("MainActivity", "Cargando usuario del servidor")
+                    UsuarioRepository.cargarSingletonUsuario(userId)
                 }
+            } else {
+                false
+            }
 
-                when (logueado) {
-                    null -> Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                    true -> ScheduleScreen(onLogout = { logueado = false })
-                    false -> LoginScreen(onLoginSuccess = { logueado = true })
-                }
+            if (savedInstanceState == null) {
+                if (logueado) mostrarSchedule() else mostrarLogin()
             }
         }
+    }
+
+    fun mostrarLogin() {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, LoginFragment())
+            .commit()
+    }
+    fun mostrarFriends() {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, FriendsFragment())
+            .addToBackStack(null)
+            .commit()
+    }
+
+    fun mostrarSchedule() {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, ScheduleFragment())
+            .commit()
+    }
+    fun mostrarGrades() {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, GradesFragment())
+            .addToBackStack(null)
+            .commit()
     }
 }

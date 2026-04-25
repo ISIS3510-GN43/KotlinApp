@@ -18,7 +18,6 @@ import com.techsolutions.worqee.models.clases.Usuario
 import com.techsolutions.worqee.models.repository.UsuarioRepository
 import com.techsolutions.worqee.views.screens.FriendsScreen
 import com.techsolutions.worqee.views.theme.WorqeeTheme
-
 class FriendsFragment : Fragment() {
 
     override fun onCreateView(
@@ -55,7 +54,14 @@ class FriendsFragment : Fragment() {
                     ) {
                         CircularProgressIndicator()
                     }
-                    true -> FriendsScreen()
+                    true -> FriendsScreen(
+                        onNavigateToGrades = {
+                            (activity as? MainActivity)?.mostrarGrades()
+                        },
+                        onNavigateToSchedule = {
+                            (activity as? MainActivity)?.mostrarSchedule()
+                        }
+                    )
                     false -> {
                         (activity as? MainActivity)?.mostrarLogin()
                     }

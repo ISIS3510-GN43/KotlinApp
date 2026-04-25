@@ -4,11 +4,11 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.techsolutions.worqee.analytics.GradeUsageTracker
-import com.techsolutions.worqee.models.Materia
-import com.techsolutions.worqee.models.Nota
-import com.techsolutions.worqee.models.Usuario
-import com.techsolutions.worqee.repository.UsuarioRepository
+import com.techsolutions.worqee.models.analytics.GradeUsageTracker
+import com.techsolutions.worqee.models.clases.Materia
+import com.techsolutions.worqee.models.clases.Nota
+import com.techsolutions.worqee.models.clases.Usuario
+import com.techsolutions.worqee.models.repository.UsuarioRepository
 import com.techsolutions.worqee.storage.PendingAction
 import com.techsolutions.worqee.storage.PendingSyncManager
 import com.techsolutions.worqee.utils.ConnectivityHelper

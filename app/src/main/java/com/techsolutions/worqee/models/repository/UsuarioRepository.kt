@@ -80,7 +80,7 @@ object UsuarioRepository {
 
     suspend fun getAmigos(userId: String): Result<List<Usuario>> {
         return try {
-            val response = RetrofitClient.apiService.getAmigos(userId)
+            val response = RetrofitClient.usuarioApi.getAmigos(userId)
             if (response.isSuccessful) {
                 val lista = response.body()
                 if (lista != null) {
@@ -129,4 +129,66 @@ object UsuarioRepository {
             Log.e("UsuarioRepository", "Error al limpiar caché: ${e.message}", e)
         }
     }
+
+    // Sprint 3
+
+    suspend fun obtenerUidPorUsername(username: String): String? {
+        return try {
+            val response = RetrofitClient.usuarioApi.getUidByUsername(username)
+
+            if (response.isSuccessful) {
+                response.body()?.string()?.trim()
+            } else {
+                Log.e("UsuarioAPI", "Error: ${response.code()}")
+                null
+            }
+
+        } catch (e: Exception) {
+            Log.e("UsuarioAPI", "Error en la conexión: ${e.message}", e)
+            null
+        }
+    }
+
+    suspend fun getUsuarioPorId(username: String): Result<Usuario> {
+        return try {
+            val idResponse = RetrofitClient.usuarioApi.getUidByUsername(username)
+            if (!idResponse.isSuccessful) {
+                return Result.failure(Exception("Usuario no encontrado"))
+            }
+            val uid = idResponse.body()?.string()?.trim()
+                ?: return Result.failure(Exception("UID vacío"))
+
+            val response = RetrofitClient.usuarioApi.getUsuario(uid)  // ✅ pasa el String extraído
+            if (response.isSuccessful) {
+                val data = response.body()
+                if (data != null) Result.success(Usuario.fromMap(data))
+                else Result.failure(Exception("Respuesta vacía"))
+            } else {
+                Result.failure(Exception("Error HTTP ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Log.e("UsuarioAPI", "Error obteniendo usuario por id: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun enviarSolicitudAmistad(fromId: String, toId: String): Result<Unit> {
+        return try {
+            val response = RetrofitClient.apiService.enviarSolicitud(
+                userId = fromId,
+                amigoid = toId
+            )
+            if (response.isSuccessful) {
+                Log.d("UsuarioAPI", "Solicitud enviada de $fromId a $toId")
+                Result.success(Unit)
+            } else {
+                Log.e("UsuarioAPI", "Error al enviar solicitud: ${response.code()}")
+                Result.failure(Exception("Error HTTP ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Log.e("UsuarioAPI", "Error enviando solicitud: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
 }

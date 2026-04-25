@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.techsolutions.worqee.models.clases.Materia
+import com.techsolutions.worqee.views.screens.GradesScreen.subjectGrades.SubjectGradesViewModel
 
 class SubjectGradesViewModelFactory(
     private val materia: Materia,

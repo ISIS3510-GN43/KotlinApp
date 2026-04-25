@@ -14,6 +14,9 @@ import android.util.Log
 import com.techsolutions.worqee.views.states.FriendStatus
 import com.techsolutions.worqee.views.states.FriendUiModel
 import com.techsolutions.worqee.views.states.FriendsUiState
+import com.techsolutions.worqee.views.states.SendRequestStatus
+import com.techsolutions.worqee.views.states.AddFriendSearchStatus
+import com.techsolutions.worqee.views.states.FoundUserUiModel
 
 data class EdificioUniversidad(
     val nombre: String,
@@ -221,5 +224,107 @@ class FriendsViewModel : ViewModel() {
             else -> h
         }
         return "%02d:00 %s".format(h12, suffix)
+    }
+    fun onOpenAddFriendDialog() {
+        _uiState.value = _uiState.value.copy(
+            showAddFriendDialog = true,
+            addFriendUsername = "",
+            addFriendSearchStatus = AddFriendSearchStatus.IDLE,
+            foundUser = null,
+            sendRequestStatus = SendRequestStatus.IDLE
+        )
+    }
+
+    fun onDismissAddFriendDialog() {
+        _uiState.value = _uiState.value.copy(
+            showAddFriendDialog = false,
+            addFriendUsername = "",
+            addFriendSearchStatus = AddFriendSearchStatus.IDLE,
+            foundUser = null,
+            sendRequestStatus = SendRequestStatus.IDLE
+        )
+    }
+
+    fun onAddFriendUsernameChanged(username: String) {
+        _uiState.value = _uiState.value.copy(
+            addFriendUsername = username,
+            addFriendSearchStatus = AddFriendSearchStatus.IDLE,
+            foundUser = null,
+            sendRequestStatus = SendRequestStatus.IDLE
+        )
+    }
+
+    fun onSearchFriendByUsername() {
+        val username = _uiState.value.addFriendUsername.trim()
+        if (username.isBlank()) return
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                addFriendSearchStatus = AddFriendSearchStatus.LOADING
+            )
+            try {
+                val result = UsuarioRepository.getUsuarioPorId(username)
+                if (result.isSuccess) {
+                    val usuario = result.getOrNull()
+                    if (usuario != null) {
+                        _uiState.value = _uiState.value.copy(
+                            addFriendSearchStatus = AddFriendSearchStatus.SUCCESS,
+                            foundUser = FoundUserUiModel(
+                                uid = usuario.id,
+                                username = usuario.username,
+                                foto = usuario.foto
+                            )
+                        )
+                    } else {
+                        _uiState.value = _uiState.value.copy(
+                            addFriendSearchStatus = AddFriendSearchStatus.NOT_FOUND
+                        )
+                    }
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        addFriendSearchStatus = AddFriendSearchStatus.NOT_FOUND
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    addFriendSearchStatus = AddFriendSearchStatus.ERROR
+                )
+            }
+        }
+    }
+
+    fun onSendFriendRequest() {
+        val foundUser = _uiState.value.foundUser ?: return
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                sendRequestStatus = SendRequestStatus.LOADING
+            )
+            try {
+                val usuarioActual = try {
+                    Usuario.getInstance()
+                } catch (e: IllegalStateException) {
+                    _uiState.value = _uiState.value.copy(
+                        sendRequestStatus = SendRequestStatus.ERROR
+                    )
+                    return@launch
+                }
+
+                val result = UsuarioRepository.enviarSolicitudAmistad(
+                    fromId = usuarioActual.id,
+                    toId = foundUser.uid
+                )
+                _uiState.value = _uiState.value.copy(
+                    sendRequestStatus = if (result.isSuccess)
+                        SendRequestStatus.SUCCESS
+                    else
+                        SendRequestStatus.ERROR
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    sendRequestStatus = SendRequestStatus.ERROR
+                )
+            }
+        }
     }
 }

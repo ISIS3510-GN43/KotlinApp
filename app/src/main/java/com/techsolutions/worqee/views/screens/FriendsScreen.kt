@@ -34,7 +34,7 @@ import com.google.android.gms.location.LocationServices
 import com.techsolutions.worqee.MainActivity
 import com.techsolutions.worqee.views.components.BottomNavBar
 import com.techsolutions.worqee.views.components.NavBarItem
-import com.techsolutions.worqee.views.fragments.GradesActivity
+import com.techsolutions.worqee.views.fragments.GradesFragment
 import com.techsolutions.worqee.viewModel.FriendsViewModel
 import com.techsolutions.worqee.views.states.AddFriendSearchStatus
 import com.techsolutions.worqee.views.states.FoundUserUiModel
@@ -45,7 +45,10 @@ import com.techsolutions.worqee.views.states.SendRequestStatus
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FriendsScreen(
+    onNavigateToGrades: () -> Unit = {},
+    onNavigateToSchedule: () -> Unit = {},
     viewModel: FriendsViewModel = viewModel()
+
 ) {
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
     val context = LocalContext.current
@@ -102,13 +105,9 @@ fun FriendsScreen(
                 selectedItem = NavBarItem.FRIENDS,
                 onItemSelected = { item ->
                     when (item) {
-                        NavBarItem.GRADES -> context.startActivity(
-                            Intent(context, GradesActivity::class.java)
-                        )
-                        NavBarItem.SCHEDULE -> context.startActivity(
-                            Intent(context, MainActivity::class.java)
-                        )
-                        NavBarItem.FRIENDS -> {}
+                        NavBarItem.GRADES   -> onNavigateToGrades()
+                        NavBarItem.SCHEDULE -> onNavigateToSchedule()
+                        NavBarItem.FRIENDS  -> Unit
                     }
                 }
             )
@@ -227,6 +226,8 @@ fun FriendsScreen(
         }
     }
 }
+
+
 
 @Composable
 fun FriendCard(
