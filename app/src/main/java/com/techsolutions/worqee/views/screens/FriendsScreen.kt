@@ -135,15 +135,7 @@ fun FriendsScreen(
         ) {
             item {
                 Spacer(modifier = Modifier.height(4.dp))
-                OutlinedTextField(
-                    value = uiState.searchQuery,
-                    onValueChange = viewModel::onSearchQueryChanged,
-                    placeholder = { Text("Search friends...") },
-                    leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(24.dp),
-                    singleLine = true
-                )
+
                 OutlinedButton(
                     onClick = { viewModel.onOpenAddFriendDialog() },
                     modifier = Modifier.fillMaxWidth(),

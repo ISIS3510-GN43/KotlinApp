@@ -54,7 +54,7 @@ object UsuarioRepository {
 
     suspend fun cargarSingletonUsuario(userId: String): Boolean {
         return try {
-            val response = RetrofitClient.usuarioApi.getUsuario(userId)
+            val response = RetrofitClient.apiService.getUsuario(userId)
 
             if (response.isSuccessful) {
                 val data = response.body()
@@ -80,7 +80,7 @@ object UsuarioRepository {
 
     suspend fun getAmigos(userId: String): Result<List<Usuario>> {
         return try {
-            val response = RetrofitClient.usuarioApi.getAmigos(userId)
+            val response = RetrofitClient.apiService.getAmigos(userId)
             if (response.isSuccessful) {
                 val lista = response.body()
                 if (lista != null) {
@@ -134,7 +134,7 @@ object UsuarioRepository {
 
     suspend fun obtenerUidPorUsername(username: String): String? {
         return try {
-            val response = RetrofitClient.usuarioApi.getUidByUsername(username)
+            val response = RetrofitClient.apiService.getUidByUsername(username)
 
             if (response.isSuccessful) {
                 response.body()?.string()?.trim()
@@ -151,14 +151,14 @@ object UsuarioRepository {
 
     suspend fun getUsuarioPorId(username: String): Result<Usuario> {
         return try {
-            val idResponse = RetrofitClient.usuarioApi.getUidByUsername(username)
+            val idResponse = RetrofitClient.apiService.getUidByUsername(username)
             if (!idResponse.isSuccessful) {
                 return Result.failure(Exception("Usuario no encontrado"))
             }
             val uid = idResponse.body()?.string()?.trim()
                 ?: return Result.failure(Exception("UID vacío"))
 
-            val response = RetrofitClient.usuarioApi.getUsuario(uid)  // ✅ pasa el String extraído
+            val response = RetrofitClient.apiService.getUsuario(uid)
             if (response.isSuccessful) {
                 val data = response.body()
                 if (data != null) Result.success(Usuario.fromMap(data))

@@ -2,6 +2,7 @@ package com.techsolutions.worqee.models.network
 
 // Service Adapter
 
+import com.techsolutions.worqee.models.clases.Metrica
 import com.techsolutions.worqee.models.clases.Usuario
 import okhttp3.ResponseBody
 import retrofit2.Response
@@ -46,6 +47,14 @@ interface ApiService {
     suspend fun enviarSolicitud(
         @Path("userId") userId: String,
         @Path("amigoid") amigoid: String
-    ): Response<List<Map<String, Any?>>>
+    ): Response<ResponseBody>
+
+
+    //Pipeline
+    @POST("MetricaFriends/nuevo")
+    suspend fun crearNuevaMetrica(
+        @Body request: Metrica
+    ): Response<ResponseBody>
+
 
 }
