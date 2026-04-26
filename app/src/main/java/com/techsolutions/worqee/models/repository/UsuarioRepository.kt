@@ -87,7 +87,8 @@ object UsuarioRepository {
 
     //Sprint 3 - EC, cache, local storage
 
-    suspend fun getAmigos(userId: String, amigoDao: AmigoDao): Result<List<Usuario>> {
+    // Retorna Pair<List<Usuario>, Boolean> donde Boolean = true si vino de caché
+    suspend fun getAmigos(userId: String, amigoDao: AmigoDao): Result<Pair<List<Usuario>, Boolean>> {
         return withContext(Dispatchers.IO) {
             try {
                 val response = RetrofitClient.apiService.getAmigos(userId)
@@ -95,36 +96,26 @@ object UsuarioRepository {
                     val lista = response.body()
                     if (lista != null) {
                         val usuarios = lista.map { Usuario.fromMap(it) }
-                        // Red exitosa → actualizamos caché
                         amigoDao.deleteAll()
                         amigoDao.insertAll(usuarios.map { it.toAmigoEntity() })
-                        Result.success(usuarios)
+                        Result.success(Pair(usuarios, false))  // false = vino de red
                     } else {
                         Result.failure(Exception("Lista vacía"))
                     }
                 } else {
-                    // Red falló → intentamos caché
-                    Log.w(
-                        "UsuarioRepository",
-                        "Red falló (${response.code()}), cargando desde Room"
-                    )
                     val cached = amigoDao.getAll()
-                    if (cached.isNotEmpty()) {
-                        Result.success(cached.map { it.toUsuario() })
-                    } else {
+                    if (cached.isNotEmpty())
+                        Result.success(Pair(cached.map { it.toUsuario() }, true))  // true = caché
+                    else
                         Result.failure(Exception("Sin red y sin caché"))
-                    }
                 }
             } catch (e: Exception) {
-                // Sin conexión → intentamos caché
-                Log.w("UsuarioRepository", "Sin conexión, cargando desde Room")
                 try {
                     val cached = amigoDao.getAll()
-                    if (cached.isNotEmpty()) {
-                        Result.success(cached.map { it.toUsuario() })
-                    } else {
-                        Result.failure(Exception("Sin red y sin caché"))
-                    }
+                    if (cached.isNotEmpty())
+                        Result.success(Pair(cached.map { it.toUsuario() }, true))  // true = caché
+                    else
+                        Result.failure(e)
                 } catch (dbEx: Exception) {
                     Result.failure(dbEx)
                 }

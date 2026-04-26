@@ -65,21 +65,16 @@ companion object {
 
     private fun loadFriends() {
         viewModelScope.launch {
-
-            val usuario = try {
-                Usuario.getInstance()
-            } catch (e: IllegalStateException) {
-                return@launch
-            }
+            val usuario = try { Usuario.getInstance() }
+            catch (e: IllegalStateException) { return@launch }
 
             val result = withContext(Dispatchers.IO) {
                 UsuarioRepository.getAmigos(usuario.id, amigoDao)
             }
 
-
             if (result.isFailure) return@launch
 
-            val amigos = result.getOrDefault(emptyList())
+            val (amigos, isOffline) = result.getOrThrow()
 
             val ahora = java.util.Calendar.getInstance()
             val diaActual = when (ahora.get(java.util.Calendar.DAY_OF_WEEK)) {
@@ -143,7 +138,7 @@ companion object {
                     lng = -74.0817 + (index * 0.01)
                 )
             }
-
+            _uiState.value = _uiState.value.copy(isOffline = isOffline)
             updateState(allFriends, _uiState.value.searchQuery)
         }
     }
@@ -167,14 +162,13 @@ companion object {
         val filtered = if (query.isBlank()) friends
         else friends.filter { it.name.contains(query, ignoreCase = true) }
 
-        _uiState.value = FriendsUiState(
+        _uiState.value = _uiState.value.copy(
             searchQuery = query,
             availableFriends = filtered.filter { it.status == FriendStatus.AVAILABLE },
             busyFriends = filtered.filter { it.status == FriendStatus.BUSY },
             offlineFriends = filtered.filter { it.status == FriendStatus.OFFLINE }
         )
     }
-
     fun construirUrlEdificioMasCercano(miLat: Double, miLng: Double): Pair<String, String> {
         val edificioCercano = edificios.minByOrNull { edificio ->
             val dLat = edificio.lat - miLat
@@ -198,10 +192,12 @@ companion object {
                 return@launch
             }
 
-            val result = UsuarioRepository.getAmigos(usuario.id, amigoDao)
+            val result = withContext(Dispatchers.IO) {
+                UsuarioRepository.getAmigos(usuario.id, amigoDao)
+            }
             if (result.isFailure) return@launch
+            val (amigos, _) = result.getOrThrow()
 
-            val amigos = result.getOrDefault(emptyList())
 
             data class Bloque(val dia: Dia, val inicio: Int, val fin: Int)
 
@@ -386,6 +382,9 @@ companion object {
     private fun getCurrentIsoDate(): String {
         val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
         return sdf.format(java.util.Date())
+    }
+    fun refresh() {
+        loadFriends()
     }
 
 }

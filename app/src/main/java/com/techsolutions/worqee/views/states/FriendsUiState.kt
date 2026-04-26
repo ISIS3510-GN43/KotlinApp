@@ -11,7 +11,8 @@ data class FriendsUiState(
     val addFriendUsername: String = "",
     val addFriendSearchStatus: AddFriendSearchStatus = AddFriendSearchStatus.IDLE,
     val foundUser: FoundUserUiModel? = null,
-    val sendRequestStatus: SendRequestStatus = SendRequestStatus.IDLE
+    val sendRequestStatus: SendRequestStatus = SendRequestStatus.IDLE,
+    val isOffline: Boolean = false
 )
 
 enum class AddFriendSearchStatus { IDLE, LOADING, SUCCESS, NOT_FOUND, ERROR }
