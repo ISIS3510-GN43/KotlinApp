@@ -1,5 +1,6 @@
 package com.techsolutions.worqee.viewModel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,6 +12,7 @@ import com.techsolutions.worqee.models.repository.UsuarioRepository
 import kotlinx.coroutines.launch
 import kotlin.math.sqrt
 import android.util.Log
+import androidx.lifecycle.ViewModelProvider
 import com.techsolutions.worqee.views.states.FriendStatus
 import com.techsolutions.worqee.views.states.FriendUiModel
 import com.techsolutions.worqee.views.states.FriendsUiState
@@ -19,6 +21,10 @@ import com.techsolutions.worqee.views.states.AddFriendSearchStatus
 import com.techsolutions.worqee.views.states.FoundUserUiModel
 import com.techsolutions.worqee.models.network.RetrofitClient
 import com.techsolutions.worqee.models.clases.Metrica
+import com.techsolutions.worqee.models.clases.daos.AmigoDao
+import com.techsolutions.worqee.models.storage.WorqeeDatabase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
 
 data class EdificioUniversidad(
@@ -26,8 +32,18 @@ data class EdificioUniversidad(
     val lat: Double,
     val lng: Double
 )
-
-class FriendsViewModel : ViewModel() {
+class FriendsViewModel(private val amigoDao: AmigoDao) : ViewModel() {
+companion object {
+    fun factory(context: Context): ViewModelProvider.Factory {
+        return object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                val dao = WorqeeDatabase.getInstance(context).amigoDao()
+                @Suppress("UNCHECKED_CAST")
+                return FriendsViewModel(dao) as T
+            }
+        }
+    }
+}
 
     private val _uiState = MutableStateFlow(FriendsUiState())
     val uiState: StateFlow<FriendsUiState> = _uiState.asStateFlow()
@@ -49,15 +65,16 @@ class FriendsViewModel : ViewModel() {
 
     private fun loadFriends() {
         viewModelScope.launch {
-            val usuario = try {
-                Usuario.getInstance()
-            } catch (e: IllegalStateException) {
-                return@launch
+            val usuario = try { Usuario.getInstance() }
+            catch (e: IllegalStateException) { return@launch }
+
+            val result = withContext(Dispatchers.IO) {
+                UsuarioRepository.getAmigos(usuario.id, amigoDao)
             }
-            val result = UsuarioRepository.getAmigos(usuario.id)
+
             if (result.isFailure) return@launch
 
-            val amigos = result.getOrDefault(emptyList())
+            val (amigos, isOffline) = result.getOrThrow()
 
             val ahora = java.util.Calendar.getInstance()
             val diaActual = when (ahora.get(java.util.Calendar.DAY_OF_WEEK)) {
@@ -121,7 +138,7 @@ class FriendsViewModel : ViewModel() {
                     lng = -74.0817 + (index * 0.01)
                 )
             }
-
+            _uiState.value = _uiState.value.copy(isOffline = isOffline)
             updateState(allFriends, _uiState.value.searchQuery)
         }
     }
@@ -145,14 +162,13 @@ class FriendsViewModel : ViewModel() {
         val filtered = if (query.isBlank()) friends
         else friends.filter { it.name.contains(query, ignoreCase = true) }
 
-        _uiState.value = FriendsUiState(
+        _uiState.value = _uiState.value.copy(
             searchQuery = query,
             availableFriends = filtered.filter { it.status == FriendStatus.AVAILABLE },
             busyFriends = filtered.filter { it.status == FriendStatus.BUSY },
             offlineFriends = filtered.filter { it.status == FriendStatus.OFFLINE }
         )
     }
-
     fun construirUrlEdificioMasCercano(miLat: Double, miLng: Double): Pair<String, String> {
         val edificioCercano = edificios.minByOrNull { edificio ->
             val dLat = edificio.lat - miLat
@@ -176,10 +192,12 @@ class FriendsViewModel : ViewModel() {
                 return@launch
             }
 
-            val result = UsuarioRepository.getAmigos(usuario.id)
+            val result = withContext(Dispatchers.IO) {
+                UsuarioRepository.getAmigos(usuario.id, amigoDao)
+            }
             if (result.isFailure) return@launch
+            val (amigos, _) = result.getOrThrow()
 
-            val amigos = result.getOrDefault(emptyList())
 
             data class Bloque(val dia: Dia, val inicio: Int, val fin: Int)
 
@@ -266,7 +284,7 @@ class FriendsViewModel : ViewModel() {
                 addFriendSearchStatus = AddFriendSearchStatus.LOADING
             )
             try {
-                val result = UsuarioRepository.getUsuarioPorId(username)
+                val result = UsuarioRepository.getUsuarioPorId(username) //Dispatcher en el respository
                 if (result.isSuccess) {
                     val usuario = result.getOrNull()
                     if (usuario != null) {
@@ -299,7 +317,7 @@ class FriendsViewModel : ViewModel() {
     fun onSendFriendRequest() {
         val foundUser = _uiState.value.foundUser ?: return
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Main) {
             _uiState.value = _uiState.value.copy(
                 sendRequestStatus = SendRequestStatus.LOADING
             )
@@ -364,6 +382,9 @@ class FriendsViewModel : ViewModel() {
     private fun getCurrentIsoDate(): String {
         val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
         return sdf.format(java.util.Date())
+    }
+    fun refresh() {
+        loadFriends()
     }
 
 }

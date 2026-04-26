@@ -4,6 +4,12 @@ import com.techsolutions.worqee.models.clases.Usuario
 import com.techsolutions.worqee.models.network.RetrofitClient
 import com.techsolutions.worqee.models.storage.LocalStorageManager
 import android.util.Log
+import com.techsolutions.worqee.models.clases.daos.AmigoDao
+import com.techsolutions.worqee.models.clases.entities.AmigoEntity
+import com.techsolutions.worqee.models.storage.toAmigoEntity
+import com.techsolutions.worqee.models.storage.toUsuario
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 object UsuarioRepository {
 
@@ -78,21 +84,42 @@ object UsuarioRepository {
         }
     }
 
-    suspend fun getAmigos(userId: String): Result<List<Usuario>> {
-        return try {
-            val response = RetrofitClient.apiService.getAmigos(userId)
-            if (response.isSuccessful) {
-                val lista = response.body()
-                if (lista != null) {
-                    Result.success(lista.map { Usuario.fromMap(it) })
+
+    //Sprint 3 - EC, cache, local storage
+
+    // Retorna Pair<List<Usuario>, Boolean> donde Boolean = true si vino de caché
+    suspend fun getAmigos(userId: String, amigoDao: AmigoDao): Result<Pair<List<Usuario>, Boolean>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = RetrofitClient.apiService.getAmigos(userId)
+                if (response.isSuccessful) {
+                    val lista = response.body()
+                    if (lista != null) {
+                        val usuarios = lista.map { Usuario.fromMap(it) }
+                        amigoDao.deleteAll()
+                        amigoDao.insertAll(usuarios.map { it.toAmigoEntity() })
+                        Result.success(Pair(usuarios, false))  // false = vino de red
+                    } else {
+                        Result.failure(Exception("Lista vacía"))
+                    }
                 } else {
-                    Result.failure(Exception("Lista vacía"))
+                    val cached = amigoDao.getAll()
+                    if (cached.isNotEmpty())
+                        Result.success(Pair(cached.map { it.toUsuario() }, true))  // true = caché
+                    else
+                        Result.failure(Exception("Sin red y sin caché"))
                 }
-            } else {
-                Result.failure(Exception("Error HTTP ${response.code()}"))
+            } catch (e: Exception) {
+                try {
+                    val cached = amigoDao.getAll()
+                    if (cached.isNotEmpty())
+                        Result.success(Pair(cached.map { it.toUsuario() }, true))  // true = caché
+                    else
+                        Result.failure(e)
+                } catch (dbEx: Exception) {
+                    Result.failure(dbEx)
+                }
             }
-        } catch (e: Exception) {
-            Result.failure(e)
         }
     }
 
@@ -150,25 +177,27 @@ object UsuarioRepository {
     }
 
     suspend fun getUsuarioPorId(username: String): Result<Usuario> {
-        return try {
-            val idResponse = RetrofitClient.apiService.getUidByUsername(username)
-            if (!idResponse.isSuccessful) {
-                return Result.failure(Exception("Usuario no encontrado"))
-            }
-            val uid = idResponse.body()?.string()?.trim()
-                ?: return Result.failure(Exception("UID vacío"))
+        return withContext(Dispatchers.IO) {
+            try {
+                val idResponse = RetrofitClient.apiService.getUidByUsername(username)
+                if (!idResponse.isSuccessful) {
+                    return@withContext Result.failure(Exception("Usuario no encontrado"))
+                }
+                val uid = idResponse.body()?.string()?.trim()
+                    ?: return@withContext Result.failure(Exception("UID vacío"))
 
-            val response = RetrofitClient.apiService.getUsuario(uid)
-            if (response.isSuccessful) {
-                val data = response.body()
-                if (data != null) Result.success(Usuario.fromMap(data))
-                else Result.failure(Exception("Respuesta vacía"))
-            } else {
-                Result.failure(Exception("Error HTTP ${response.code()}"))
+                val response = RetrofitClient.apiService.getUsuario(uid)
+                if (response.isSuccessful) {
+                    val data = response.body()
+                    if (data != null) Result.success(Usuario.fromMap(data))
+                    else Result.failure(Exception("Respuesta vacía"))
+                } else {
+                    Result.failure(Exception("Error HTTP ${response.code()}"))
+                }
+            } catch (e: Exception) {
+                Log.e("UsuarioAPI", "Error obteniendo usuario por id: ${e.message}", e)
+                Result.failure(e)
             }
-        } catch (e: Exception) {
-            Log.e("UsuarioAPI", "Error obteniendo usuario por id: ${e.message}", e)
-            Result.failure(e)
         }
     }
 
