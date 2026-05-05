@@ -4,14 +4,15 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import com.techsolutions.worqee.models.clases.Usuario
-import com.techsolutions.worqee.storage.PendingSyncManager
+import com.techsolutions.worqee.models.repository.GradesRepository
+import com.techsolutions.worqee.models.storage.PendingSyncManager
+import com.techsolutions.worqee.viewModel.SubjectGradesViewModel
 import com.techsolutions.worqee.viewModel.SubjectGradesViewModelFactory
-import com.techsolutions.worqee.views.screens.GradesScreen.subjectGrades.SubjectGradesViewModel
 import com.techsolutions.worqee.views.screens.SubjectGradesScreen
 import com.techsolutions.worqee.views.theme.WorqeeTheme
 
 class SubjectGradesActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -20,21 +21,26 @@ class SubjectGradesActivity : ComponentActivity() {
         val materiaId = intent.getStringExtra("materiaId")
         val materiaNombre = intent.getStringExtra("materiaNombre")
 
-        val usuario = Usuario.getInstance()
-        val horario = usuario.horarios.firstOrNull { it.activo }
-            ?: usuario.horarios.firstOrNull()
-
-        val materia = horario?.materias?.find { it.id == materiaId }
-            ?: horario?.materias?.find { it.nombre == materiaNombre }
+        val materia = GradesRepository.findMateriaByIdOrName(
+            materiaId = materiaId,
+            materiaNombre = materiaNombre
+        )
 
         if (materia != null) {
-            val factory = SubjectGradesViewModelFactory(materia, applicationContext)
+            val factory = SubjectGradesViewModelFactory(
+                materia = materia,
+                context = applicationContext
+            )
+
             val viewModel: SubjectGradesViewModel by viewModels { factory }
+
             setContent {
                 WorqeeTheme {
                     SubjectGradesScreen(viewModel)
                 }
             }
+        } else {
+            finish()
         }
     }
 }

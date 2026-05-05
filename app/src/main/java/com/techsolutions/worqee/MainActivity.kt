@@ -1,52 +1,45 @@
 package com.techsolutions.worqee
 
-import android.content.Context
 import android.content.pm.ActivityInfo
 import android.os.Bundle
-import android.util.Log
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import com.techsolutions.worqee.models.clases.Usuario
-import com.techsolutions.worqee.models.repository.UsuarioRepository
+import androidx.lifecycle.lifecycleScope
 import com.techsolutions.worqee.models.storage.LocalStorageManager
+import com.techsolutions.worqee.models.storage.PendingSyncManager
+import com.techsolutions.worqee.viewModel.MainUiState
+import com.techsolutions.worqee.viewModel.MainViewModel
 import com.techsolutions.worqee.views.fragments.FriendsFragment
 import com.techsolutions.worqee.views.fragments.GradesFragment
 import com.techsolutions.worqee.views.fragments.LoginFragment
 import com.techsolutions.worqee.views.fragments.ScheduleFragment
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
+    private val viewModel: MainViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Bloqueo de rotación también por código
+
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         setContentView(R.layout.activity_main)
 
         LocalStorageManager.init(applicationContext)
+        PendingSyncManager.init(applicationContext)
 
-        val prefs = getSharedPreferences("worqee_prefs", Context.MODE_PRIVATE)
-        val userId = prefs.getString("userId", null)
-
-        CoroutineScope(Dispatchers.Main).launch {
-            val logueado = if (userId != null) {
-                val usuarioCache = UsuarioRepository.cargarDelCaché()
-                if (usuarioCache != null) {
-                    Usuario.setInstance(usuarioCache)
-                    Log.d("MainActivity", "Usuario cargado desde caché")
-                    true
-                } else {
-                    Log.d("MainActivity", "Cargando usuario del servidor")
-                    UsuarioRepository.cargarSingletonUsuario(userId)
+        if (savedInstanceState == null) {
+            lifecycleScope.launch {
+                viewModel.uiState.collect { state ->
+                    when (state) {
+                        MainUiState.Loading -> Unit
+                        MainUiState.Authenticated -> mostrarSchedule()
+                        MainUiState.Unauthenticated -> mostrarLogin()
+                    }
                 }
-            } else {
-                false
             }
 
-            if (savedInstanceState == null) {
-                if (logueado) mostrarSchedule() else mostrarLogin()
-            }
+            viewModel.restoreSession()
         }
     }
 
@@ -55,6 +48,7 @@ class MainActivity : AppCompatActivity() {
             .replace(R.id.fragment_container, LoginFragment())
             .commit()
     }
+
     fun mostrarFriends() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, FriendsFragment())
@@ -67,6 +61,7 @@ class MainActivity : AppCompatActivity() {
             .replace(R.id.fragment_container, ScheduleFragment())
             .commit()
     }
+
     fun mostrarGrades() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, GradesFragment())

@@ -43,7 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.techsolutions.worqee.models.clases.Nota
-import com.techsolutions.worqee.views.screens.GradesScreen.subjectGrades.SubjectGradesViewModel
+import com.techsolutions.worqee.viewModel.SubjectGradesViewModel
 import com.techsolutions.worqee.views.theme.BackgroundLight
 import com.techsolutions.worqee.views.theme.PrimaryActionBlue
 import com.techsolutions.worqee.views.theme.SurfaceLight
