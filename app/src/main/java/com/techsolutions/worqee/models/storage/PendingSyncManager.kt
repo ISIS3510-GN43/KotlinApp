@@ -1,4 +1,4 @@
-package com.techsolutions.worqee.storage
+package com.techsolutions.worqee.models.storage
 
 import android.content.Context
 import android.util.Log
