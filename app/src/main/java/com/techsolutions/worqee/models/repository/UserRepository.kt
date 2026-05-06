@@ -5,7 +5,7 @@ import com.techsolutions.worqee.models.network.RetrofitClient
 import com.techsolutions.worqee.models.storage.LocalStorageManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-object UsuarioRepository {
+object UserRepository {
 
     suspend fun register(usuario: Usuario): Result<Usuario> {
         return try {
