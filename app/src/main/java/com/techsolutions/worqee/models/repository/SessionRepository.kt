@@ -1,42 +1,42 @@
 package com.techsolutions.worqee.models.repository
 
-import com.techsolutions.worqee.models.clases.Usuario
+import com.techsolutions.worqee.models.clases.User
 import com.techsolutions.worqee.models.storage.LocalStorageManager
 
 object SessionRepository {
 
-    suspend fun restoreSession(): Usuario? {
-        val userId = LocalStorageManager.cargarUserId() ?: return null
+    suspend fun restoreSession(): User? {
+        val userId = LocalStorageManager.loadUserId() ?: return null
 
-        val cachedUser = UsuarioRepository.cargarDelCaché()
+        val cachedUser = UserRepository.loadFromCache()
 
         if (cachedUser != null) {
-            Usuario.setInstance(cachedUser) // temporal
+            User.setInstance(cachedUser)
             return cachedUser
         }
 
-        val serverResult = UsuarioRepository.cargarUsuarioDesdeServidor(userId)
+        val serverResult = UserRepository.loadUserFromServer(userId)
 
         if (serverResult.isSuccess) {
-            val usuario = serverResult.getOrThrow()
+            val user = serverResult.getOrThrow()
 
-            Usuario.setInstance(usuario) // temporal
-            UsuarioRepository.guardarEnCaché(usuario)
+            User.setInstance(user)
+            UserRepository.saveToCache(user)
 
-            return usuario
+            return user
         }
 
         return null
     }
 
-    fun getCurrentUser(): Usuario? {
+    fun getCurrentUser(): User? {
         return try {
-            Usuario.getInstance()
+            User.getInstance()
         } catch (_: IllegalStateException) {
-            val cachedUser = UsuarioRepository.cargarDelCaché()
+            val cachedUser = UserRepository.loadFromCache()
 
             if (cachedUser != null) {
-                Usuario.setInstance(cachedUser)
+                User.setInstance(cachedUser)
             }
 
             cachedUser

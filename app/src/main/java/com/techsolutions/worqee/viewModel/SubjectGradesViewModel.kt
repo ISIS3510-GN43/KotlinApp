@@ -3,8 +3,8 @@ package com.techsolutions.worqee.viewModel
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.techsolutions.worqee.models.clases.Materia
-import com.techsolutions.worqee.models.clases.Nota
+import com.techsolutions.worqee.models.clases.Grade
+import com.techsolutions.worqee.models.clases.Subject
 import com.techsolutions.worqee.models.repository.GradeOperationResult
 import com.techsolutions.worqee.models.repository.GradesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,20 +13,20 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class SubjectGradesViewModel(
-    private val materia: Materia,
+    private val subject: Subject,
     private val context: Context
 ) : ViewModel() {
 
-    private val _materiaState =
-        MutableStateFlow(materia.copy(notas = materia.notas.toMutableList()))
-    val materiaState: StateFlow<Materia> = _materiaState.asStateFlow()
+    private val _subjectState =
+        MutableStateFlow(subject.copy(grades = subject.grades.toMutableList()))
+    val subjectState: StateFlow<Subject> = _subjectState.asStateFlow()
 
-    private val _estáEnRiesgo = MutableStateFlow(materia.estáEnRiesgo())
-    val estáEnRiesgo: StateFlow<Boolean> = _estáEnRiesgo.asStateFlow()
+    private val _isAtRisk = MutableStateFlow(subject.isAtRisk())
+    val isAtRisk: StateFlow<Boolean> = _isAtRisk.asStateFlow()
 
-    private val _porcentajeAgregado =
-        MutableStateFlow(materia.obtenerPorcentajeAgregado())
-    val porcentajeAgregado: StateFlow<Double> = _porcentajeAgregado.asStateFlow()
+    private val _addedPercentage =
+        MutableStateFlow(subject.getAddedPercentage())
+    val addedPercentage: StateFlow<Double> = _addedPercentage.asStateFlow()
 
     private val _isOffline =
         MutableStateFlow(GradesRepository.isOffline(context))
@@ -40,57 +40,59 @@ class SubjectGradesViewModel(
         syncPendingActions()
     }
 
-    fun getMateria(): Materia = materia
+    fun getSubject(): Subject {
+        return subject
+    }
 
-    fun agregarActividad(
-        nombre: String,
-        nota: Float,
-        porcentaje: Float
+    fun addGrade(
+        title: String,
+        value: Float,
+        percentage: Float
     ) {
-        val result = GradesRepository.agregarActividad(
+        val result = GradesRepository.addGrade(
             context = context,
-            materia = materia,
-            nombre = nombre,
-            nota = nota,
-            porcentaje = porcentaje
+            subject = subject,
+            title = title,
+            value = value,
+            percentage = percentage
         )
 
-        aplicarResultado(result)
-        actualizarMateriaState()
+        applyResult(result)
+        updateSubjectState()
     }
 
-    fun eliminarActividad(nota: Nota) {
-        val result = GradesRepository.eliminarActividad(
+    fun deleteGrade(grade: Grade) {
+        val result = GradesRepository.deleteGrade(
             context = context,
-            materia = materia,
-            nota = nota
+            subject = subject,
+            grade = grade
         )
 
-        aplicarResultado(result)
-        actualizarMateriaState()
+        applyResult(result)
+        updateSubjectState()
     }
 
-    fun actualizarObjetivo(objetivo: String) {
-        val objValue = objetivo.toDoubleOrNull() ?: 0.0
+    fun updateObjective(objective: String) {
+        val objectiveValue = objective.toDoubleOrNull() ?: 0.0
 
-        val result = GradesRepository.actualizarObjetivo(
+        val result = GradesRepository.updateObjective(
             context = context,
-            materia = materia,
-            objetivo = objValue
+            subject = subject,
+            objective = objectiveValue
         )
 
-        aplicarResultado(result)
-        actualizarMateriaState()
+        applyResult(result)
+        updateSubjectState()
     }
 
     fun syncPendingActions() {
         viewModelScope.launch {
             val result = GradesRepository.syncPendingActions(context)
-            aplicarResultado(result)
+            applyResult(result)
         }
     }
 
-    private fun aplicarResultado(result: GradeOperationResult) {
+    private fun applyResult(result: GradeOperationResult) {
         when (result) {
             is GradeOperationResult.Success -> {
                 _isOffline.value = result.isOffline
@@ -98,18 +100,22 @@ class SubjectGradesViewModel(
             }
 
             is GradeOperationResult.Error -> {
-                // Luego podemos agregar un errorState si quieren mostrar mensajes.
+                // Add an error state later if messages need to be shown in the UI.
             }
         }
     }
 
-    private fun actualizarMateriaState() {
-        _materiaState.value = materia.copy(notas = materia.notas.toMutableList())
-        _estáEnRiesgo.value = materia.estáEnRiesgo()
-        _porcentajeAgregado.value = materia.obtenerPorcentajeAgregado()
+    private fun updateSubjectState() {
+        _subjectState.value = subject.copy(grades = subject.grades.toMutableList())
+        _isAtRisk.value = subject.isAtRisk()
+        _addedPercentage.value = subject.getAddedPercentage()
     }
 
-    fun calcularPromedio(): Float = materia.calcularPromedio()
+    fun calculateAverage(): Float {
+        return subject.calculateAverage()
+    }
 
-    fun calcularProgreso(): Float = materia.calcularProgreso()
+    fun calculateProgress(): Float {
+        return subject.calculateProgress()
+    }
 }

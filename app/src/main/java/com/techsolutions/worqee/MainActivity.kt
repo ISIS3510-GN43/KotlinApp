@@ -33,8 +33,8 @@ class MainActivity : AppCompatActivity() {
                 viewModel.uiState.collect { state ->
                     when (state) {
                         MainUiState.Loading -> Unit
-                        MainUiState.Authenticated -> mostrarSchedule()
-                        MainUiState.Unauthenticated -> mostrarLogin()
+                        MainUiState.Authenticated -> showSchedule()
+                        MainUiState.Unauthenticated -> showLogin()
                     }
                 }
             }
@@ -43,26 +43,26 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun mostrarLogin() {
+    fun showLogin() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, LoginFragment())
             .commit()
     }
 
-    fun mostrarFriends() {
+    fun showFriends() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, FriendsFragment())
             .addToBackStack(null)
             .commit()
     }
 
-    fun mostrarSchedule() {
+    fun showSchedule() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, ScheduleFragment())
             .commit()
     }
 
-    fun mostrarGrades() {
+    fun showGrades() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, GradesFragment())
             .addToBackStack(null)

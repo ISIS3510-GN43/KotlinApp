@@ -1,18 +1,18 @@
 package com.techsolutions.worqee.models.repository
 
-import com.techsolutions.worqee.models.clases.Horario
-import com.techsolutions.worqee.models.clases.Materia
+import com.techsolutions.worqee.models.clases.Schedule
+import com.techsolutions.worqee.models.clases.Subject
 
 object ScheduleRepository {
 
-    fun getHorarioActivo(): Horario? {
-        val usuario = SessionRepository.getCurrentUser() ?: return null
+    fun getActiveSchedule(): Schedule? {
+        val user = SessionRepository.getCurrentUser() ?: return null
 
-        return usuario.horarios.firstOrNull { it.activo }
-            ?: usuario.horarios.firstOrNull()
+        return user.schedules.firstOrNull { it.isActive }
+            ?: user.schedules.firstOrNull()
     }
 
-    fun getMateriasActivas(): List<Materia> {
-        return getHorarioActivo()?.materias ?: emptyList()
+    fun getActiveSubjects(): List<Subject> {
+        return getActiveSchedule()?.subjects ?: emptyList()
     }
 }

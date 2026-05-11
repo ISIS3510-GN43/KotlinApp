@@ -1,25 +1,25 @@
 package com.techsolutions.worqee.views.states
 
-import com.techsolutions.worqee.models.clases.Dia
-import com.techsolutions.worqee.models.clases.Materia
+import com.techsolutions.worqee.models.clases.Day
+import com.techsolutions.worqee.models.clases.Subject
 
 enum class ScheduleViewMode {
     DAY, WEEK
 }
 
 data class ScheduleUiState(
-    val titulo: String = "My Schedule",
-    val allMaterias: List<Materia> = emptyList(),
-    val availableDays: List<Dia> = emptyList(),
-    val selectedDay: Dia? = null,
+    val title: String = "Mi horario",
+    val allSubjects: List<Subject> = emptyList(),
+    val availableDays: List<Day> = emptyList(),
+    val selectedDay: Day? = null,
     val viewMode: ScheduleViewMode = ScheduleViewMode.DAY
 ) {
-    val filteredMaterias: List<Materia>
+    val filteredSubjects: List<Subject>
         get() = if (selectedDay == null) {
             emptyList()
         } else {
-            allMaterias
-                .filter { materia -> materia.dias.contains(selectedDay) }
-                .sortedBy { it.horaInicio.firstOrNull() ?: Int.MAX_VALUE }
+            allSubjects
+                .filter { subject -> subject.days.contains(selectedDay) }
+                .sortedBy { it.startHours.firstOrNull() ?: Int.MAX_VALUE }
         }
 }

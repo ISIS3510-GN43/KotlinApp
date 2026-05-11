@@ -3,91 +3,108 @@ package com.techsolutions.worqee.models.clases
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
 
-data class Materia(
+data class Subject(
     var id: String = "",
-    var nombre: String = "",
-    var aula: MutableList<String> = mutableListOf(),
-    var dias: MutableList<Dia> = mutableListOf(),
-    var horaInicio: MutableList<Int> = mutableListOf(),
-    var horaFin: MutableList<Int> = mutableListOf(),
+    var name: String = "",
+    var classrooms: MutableList<String> = mutableListOf(),
+    var days: MutableList<Day> = mutableListOf(),
+    var startHours: MutableList<Int> = mutableListOf(),
+    var endHours: MutableList<Int> = mutableListOf(),
     var color: String = "",
-    var fechaInicio: LocalDateTime = LocalDateTime.now(),
-    var fechaFin: LocalDateTime = LocalDateTime.now(),
-    var notas: MutableList<Nota> = mutableListOf(),
-    var profesor: String = "",
-    var objetivo: Double = 0.0
+    var startDate: LocalDateTime = LocalDateTime.now(),
+    var endDate: LocalDateTime = LocalDateTime.now(),
+    var grades: MutableList<Grade> = mutableListOf(),
+    var professor: String = "",
+    var objective: Double = 0.0
 ) {
     fun toJson(): Map<String, Any?> {
         return mapOf(
             "id" to id,
-            "nombre" to nombre,
-            "aula" to aula,
-            "dias" to dias.map { it.toJson() },
-            "horaInicio" to horaInicio,
-            "horaFin" to horaFin,
+            "nombre" to name,
+            "aula" to classrooms,
+            "dias" to days.map { it.toJson() },
+            "horaInicio" to startHours,
+            "horaFin" to endHours,
             "color" to color,
-            "fechaInicio" to fechaInicio.toString(),
-            "fechaFin" to fechaFin.toString(),
-            "notas" to notas.map { it.toJson() },
-            "profesor" to profesor,
-            "objetivo" to objetivo
+            "fechaInicio" to startDate.toString(),
+            "fechaFin" to endDate.toString(),
+            "notas" to grades.map { it.toJson() },
+            "profesor" to professor,
+            "objetivo" to objective
         )
     }
-    fun calcularPromedio(): Float {
 
-    if (notas.isEmpty()) return 0f
+    fun calculateAverage(): Float {
+        if (grades.isEmpty()) return 0f
 
-    var suma = 0f
+        var sum = 0f
 
-    notas.forEach {
-        suma += it.grade.toFloat() * (it.porcentaje.toFloat() / 100f)
+        grades.forEach { grade ->
+            sum += grade.value.toFloat() * (grade.percentage.toFloat() / 100f)
+        }
+
+        return sum
     }
 
-    return suma
+    fun calculateProgress(): Float {
+        val average = calculateAverage()
+
+        return if (objective > 0) {
+            (average / objective.toFloat()).coerceIn(0f, 1f)
+        } else {
+            0f
+        }
     }
 
-    fun calcularProgreso(): Float {
+    fun isAtRisk(): Boolean {
+        val addedPercentage = grades.sumOf { it.percentage }
+        val average = calculateAverage()
 
-    val promedio = calcularPromedio()
-
-    return if (objetivo > 0) {
-        (promedio / objetivo.toFloat()).coerceIn(0f, 1f)
-    } else 0f
+        return addedPercentage >= 30 && average < 3.0
     }
 
-    fun estáEnRiesgo(): Boolean {
-        val porcentajeAgregado = notas.sumOf { it.porcentaje }
-        val promedio = calcularPromedio()
-        return porcentajeAgregado >= 30 && promedio < 3.0
-    }
-
-    fun obtenerPorcentajeAgregado(): Double {
-        return notas.sumOf { it.porcentaje }
+    fun getAddedPercentage(): Double {
+        return grades.sumOf { it.percentage }
     }
 
     companion object {
-        fun fromJson(json: Map<String, Any?>): Materia {
-            return Materia(
+        fun fromJson(json: Map<String, Any?>): Subject {
+            return Subject(
                 id = json["id"] as? String ?: "",
-                nombre = json["nombre"] as? String ?: "",
-                aula = ((json["aula"] as? List<*>)?.mapNotNull { it as? String } ?: emptyList()).toMutableList(),
-                dias = ((json["dias"] as? List<*>)?.mapNotNull { it as? String }?.map { Dia.fromJson(it) } ?: emptyList()).toMutableList(),
-                horaInicio = ((json["horaInicio"] as? List<*>)?.mapNotNull { (it as? Number)?.toInt() } ?: emptyList()).toMutableList(),
-                horaFin = ((json["horaFin"] as? List<*>)?.mapNotNull { (it as? Number)?.toInt() } ?: emptyList()).toMutableList(),
-                color = json["color"] as? String ?: "",
-                fechaInicio = (json["fechaInicio"] as? String)?.let {
-                    ZonedDateTime.parse(it).toLocalDateTime()
-                } ?: LocalDateTime.now(),
-                fechaFin = (json["fechaFin"] as? String)?.let {
-                    ZonedDateTime.parse(it).toLocalDateTime()
-                } ?: LocalDateTime.now(),
-                notas = ((json["notas"] as? List<*>)?.mapNotNull {
-                    @Suppress("UNCHECKED_CAST")
-                    Nota.fromJson(it as Map<String, Any?>)
+                name = json["nombre"] as? String ?: "",
+                classrooms = ((json["aula"] as? List<*>)?.mapNotNull { it as? String }
+                    ?: emptyList()).toMutableList(),
+                days = ((json["dias"] as? List<*>)?.mapNotNull { it as? String }?.map {
+                    Day.fromJson(it)
                 } ?: emptyList()).toMutableList(),
-                profesor = json["profesor"] as? String ?: "",
-                objetivo = (json["objetivo"] as? Number)?.toDouble() ?: 0.0
+                startHours = ((json["horaInicio"] as? List<*>)?.mapNotNull {
+                    (it as? Number)?.toInt()
+                } ?: emptyList()).toMutableList(),
+                endHours = ((json["horaFin"] as? List<*>)?.mapNotNull {
+                    (it as? Number)?.toInt()
+                } ?: emptyList()).toMutableList(),
+                color = json["color"] as? String ?: "",
+                startDate = parseDateTime(json["fechaInicio"] as? String),
+                endDate = parseDateTime(json["fechaFin"] as? String),
+                grades = ((json["notas"] as? List<*>)?.mapNotNull {
+                    @Suppress("UNCHECKED_CAST")
+                    Grade.fromJson(it as? Map<String, Any?> ?: return@mapNotNull null)
+                } ?: emptyList()).toMutableList(),
+                professor = json["profesor"] as? String ?: "",
+                objective = (json["objetivo"] as? Number)?.toDouble() ?: 0.0
             )
+        }
+
+        private fun parseDateTime(value: String?): LocalDateTime {
+            if (value.isNullOrBlank()) return LocalDateTime.now()
+
+            return runCatching {
+                LocalDateTime.parse(value)
+            }.getOrElse {
+                runCatching {
+                    ZonedDateTime.parse(value).toLocalDateTime()
+                }.getOrDefault(LocalDateTime.now())
+            }
         }
     }
 }

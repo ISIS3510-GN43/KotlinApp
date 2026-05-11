@@ -19,7 +19,7 @@ class LoginFragment : Fragment() {
             WorqeeTheme {
                 LoginScreen(
                     onLoginSuccess = {
-                        (activity as? MainActivity)?.mostrarSchedule()
+                        (activity as? MainActivity)?.showSchedule()
                     }
                 )
             }

@@ -1,5 +1,6 @@
 package com.techsolutions.worqee.views.screens
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,6 +28,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -36,49 +39,44 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.techsolutions.worqee.models.clases.Dia
-import com.techsolutions.worqee.models.clases.Materia
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.firebase.auth.FirebaseAuth
+import com.techsolutions.worqee.models.clases.Day
+import com.techsolutions.worqee.models.clases.Subject
+import com.techsolutions.worqee.models.clases.User
+import com.techsolutions.worqee.models.storage.LocalStorageManager
+import com.techsolutions.worqee.viewModel.ScheduleViewModel
+import com.techsolutions.worqee.views.components.BottomNavBar
+import com.techsolutions.worqee.views.components.NavBarItem
+import com.techsolutions.worqee.views.states.ScheduleViewMode
 import com.techsolutions.worqee.views.theme.AntiFlashWhite
 import com.techsolutions.worqee.views.theme.BackgroundLight
 import com.techsolutions.worqee.views.theme.BorderLight
 import com.techsolutions.worqee.views.theme.LinkBlue
 import com.techsolutions.worqee.views.theme.Night
 import com.techsolutions.worqee.views.theme.TextSecondary
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.techsolutions.worqee.views.components.NavBarItem
-import com.techsolutions.worqee.views.components.BottomNavBar
-import android.content.Context
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import com.google.firebase.auth.FirebaseAuth
-import androidx.core.content.edit
-import com.techsolutions.worqee.models.clases.Usuario
-import com.techsolutions.worqee.models.storage.LocalStorageManager
-import androidx.compose.ui.text.style.TextOverflow
-import com.techsolutions.worqee.viewModel.ScheduleViewModel
-import com.techsolutions.worqee.views.states.ScheduleViewMode
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleScreen(
-    onNavigateToGrades: () -> Unit = {},   // ← ahora es un callback como los demás
+    onNavigateToGrades: () -> Unit = {},
     onNavigateToFriends: () -> Unit = {},
     onLogout: () -> Unit = {},
     viewModel: ScheduleViewModel = viewModel()
 ) {
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
-    var mostrarMenu by remember { mutableStateOf(false) }
+    var showMenu by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     Scaffold(
@@ -86,7 +84,7 @@ fun ScheduleScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = uiState.titulo,
+                        text = uiState.title,
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onBackground
                     )
@@ -95,27 +93,35 @@ fun ScheduleScreen(
                     Box {
                         Icon(
                             imageVector = Icons.Outlined.MoreVert,
-                            contentDescription = "More",
+                            contentDescription = "Más opciones",
                             modifier = Modifier
                                 .padding(end = 16.dp)
-                                .clickable { mostrarMenu = true },
+                                .clickable { showMenu = true },
                             tint = MaterialTheme.colorScheme.onBackground
                         )
+
                         DropdownMenu(
-                            expanded = mostrarMenu,
-                            onDismissRequest = { mostrarMenu = false }
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
                         ) {
                             DropdownMenuItem(
                                 text = { Text("Cerrar sesión") },
                                 onClick = {
-                                    mostrarMenu = false
+                                    showMenu = false
+
                                     FirebaseAuth.getInstance().signOut()
-                                    Usuario.clearInstance()
-                                    LocalStorageManager.limpiarCaché()
-                                    val prefs = context.getSharedPreferences("worqee_prefs", Context.MODE_PRIVATE)
-                                    prefs.edit(commit = true) {
-                                        remove("userId")
-                                    }
+                                    User.clearInstance()
+                                    LocalStorageManager.clearSession()
+
+                                    val prefs = context.getSharedPreferences(
+                                        "worqee_prefs",
+                                        Context.MODE_PRIVATE
+                                    )
+
+                                    prefs.edit()
+                                        .remove("userId")
+                                        .apply()
+
                                     onLogout()
                                 }
                             )
@@ -132,9 +138,9 @@ fun ScheduleScreen(
                 selectedItem = NavBarItem.SCHEDULE,
                 onItemSelected = { item ->
                     when (item) {
-                        NavBarItem.GRADES   -> onNavigateToGrades()   // ← callback, sin Intent
-                        NavBarItem.SCHEDULE -> Unit                    // ya estás aquí
-                        NavBarItem.FRIENDS  -> onNavigateToFriends()
+                        NavBarItem.GRADES -> onNavigateToGrades()
+                        NavBarItem.SCHEDULE -> Unit
+                        NavBarItem.FRIENDS -> onNavigateToFriends()
                     }
                 }
             )
@@ -145,7 +151,10 @@ fun ScheduleScreen(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = Night
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add")
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Agregar"
+                )
             }
         },
         containerColor = BackgroundLight
@@ -174,7 +183,7 @@ fun ScheduleScreen(
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
                         item {
-                            ScheduleTimeline(materias = uiState.filteredMaterias)
+                            ScheduleTimeline(subjects = uiState.filteredSubjects)
                         }
                     }
                 }
@@ -182,7 +191,7 @@ fun ScheduleScreen(
                 ScheduleViewMode.WEEK -> {
                     WeeklyScheduleGrid(
                         days = uiState.availableDays,
-                        materias = uiState.allMaterias,
+                        subjects = uiState.allSubjects,
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(16.dp)
@@ -195,9 +204,9 @@ fun ScheduleScreen(
 
 @Composable
 fun DaysRow(
-    days: List<Dia>,
-    selectedDay: Dia?,
-    onDaySelected: (Dia) -> Unit
+    days: List<Day>,
+    selectedDay: Day?,
+    onDaySelected: (Day) -> Unit
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -221,14 +230,17 @@ fun DayChip(
     selected: Boolean,
     onClick: () -> Unit
 ) {
-    val bg = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
-    val dayColor = if (selected) AntiFlashWhite else TextSecondary
+    val backgroundColor =
+        if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
+
+    val dayColor =
+        if (selected) AntiFlashWhite else TextSecondary
 
     Column(
         modifier = Modifier
             .width(64.dp)
             .height(72.dp)
-            .background(bg, RoundedCornerShape(16.dp))
+            .background(backgroundColor, RoundedCornerShape(16.dp))
             .border(
                 width = if (selected) 0.dp else 1.dp,
                 color = BorderLight,
@@ -262,16 +274,20 @@ fun ScheduleHeaderActions(
     ) {
         Button(onClick = onToggleView) {
             Text(
-                text = if (viewMode == ScheduleViewMode.DAY) "Vista semanal" else "Vista diaria"
+                text = if (viewMode == ScheduleViewMode.DAY) {
+                    "Vista semanal"
+                } else {
+                    "Vista diaria"
+                }
             )
         }
     }
 }
 
 @Composable
-fun ScheduleTimeline(materias: List<Materia>) {
+fun ScheduleTimeline(subjects: List<Subject>) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        if (materias.isEmpty()) {
+        if (subjects.isEmpty()) {
             Text(
                 text = "No hay materias para este día",
                 style = MaterialTheme.typography.bodyMedium,
@@ -280,15 +296,22 @@ fun ScheduleTimeline(materias: List<Materia>) {
             return@Column
         }
 
-        materias.forEachIndexed { index, materia ->
-            val horaLabel = formatHourLabel(materia.horaInicio.firstOrNull())
-            TimeSlot(hora = horaLabel, materia = materia)
+        subjects.forEach { subject ->
+            val timeLabel = formatHourLabel(subject.startHours.firstOrNull())
+
+            TimeSlot(
+                time = timeLabel,
+                subject = subject
+            )
         }
     }
 }
 
 @Composable
-fun TimeSlot(hora: String, materia: Materia) {
+fun TimeSlot(
+    time: String,
+    subject: Subject
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Top
@@ -298,11 +321,13 @@ fun TimeSlot(hora: String, materia: Materia) {
             horizontalAlignment = Alignment.Start
         ) {
             Text(
-                text = hora,
+                text = time,
                 style = MaterialTheme.typography.labelLarge,
                 color = TextSecondary
             )
+
             Spacer(modifier = Modifier.height(8.dp))
+
             Divider(
                 modifier = Modifier
                     .height(96.dp)
@@ -313,13 +338,14 @@ fun TimeSlot(hora: String, materia: Materia) {
         }
 
         Spacer(modifier = Modifier.width(8.dp))
-        ClassCard(materia)
+
+        SubjectCard(subject)
     }
 }
 
 @Composable
-fun ClassCard(materia: Materia) {
-    val parsedColor = parseHexColor(materia.color)
+fun SubjectCard(subject: Subject) {
+    val parsedColor = parseHexColor(subject.color)
     val tagColor = parsedColor.copy(alpha = 0.18f)
     val tagTextColor = parsedColor
 
@@ -335,7 +361,7 @@ fun ClassCard(materia: Materia) {
                 verticalAlignment = Alignment.Top
             ) {
                 Text(
-                    text = materia.nombre,
+                    text = subject.name,
                     modifier = Modifier.weight(1f),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
@@ -347,7 +373,7 @@ fun ClassCard(materia: Materia) {
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = materia.profesor.ifBlank { "MATERIA" },
+                        text = subject.professor.ifBlank { "MATERIA" },
                         style = MaterialTheme.typography.labelSmall,
                         color = tagTextColor
                     )
@@ -358,8 +384,8 @@ fun ClassCard(materia: Materia) {
 
             Text(
                 text = formatHourRange(
-                    materia.horaInicio.firstOrNull(),
-                    materia.horaFin.firstOrNull()
+                    subject.startHours.firstOrNull(),
+                    subject.endHours.firstOrNull()
                 ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = TextSecondary
@@ -374,9 +400,11 @@ fun ClassCard(materia: Materia) {
                     tint = TextSecondary,
                     modifier = Modifier.size(16.dp)
                 )
+
                 Spacer(modifier = Modifier.width(4.dp))
+
                 Text(
-                    text = materia.aula.joinToString(" · ").ifBlank { "Sin aula" },
+                    text = subject.classrooms.joinToString(" · ").ifBlank { "Sin aula" },
                     style = MaterialTheme.typography.bodyMedium,
                     color = TextSecondary
                 )
@@ -387,8 +415,8 @@ fun ClassCard(materia: Materia) {
 
 @Composable
 fun WeeklyScheduleGrid(
-    days: List<Dia>,
-    materias: List<Materia>,
+    days: List<Day>,
+    subjects: List<Subject>,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -396,19 +424,22 @@ fun WeeklyScheduleGrid(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         days.forEach { day ->
-            val dayMaterias = materias
-                .filter { it.dias.contains(day) }
-                .sortedBy { it.horaInicio.firstOrNull() ?: Int.MAX_VALUE }
+            val daySubjects = subjects
+                .filter { it.days.contains(day) }
+                .sortedBy { it.startHours.firstOrNull() ?: Int.MAX_VALUE }
 
-            WeeklyDayColumn(day = day, materias = dayMaterias)
+            WeeklyDayColumn(
+                day = day,
+                subjects = daySubjects
+            )
         }
     }
 }
 
 @Composable
 fun WeeklyDayColumn(
-    day: Dia,
-    materias: List<Materia>
+    day: Day,
+    subjects: List<Subject>
 ) {
     Column(
         modifier = Modifier.width(140.dp),
@@ -432,7 +463,7 @@ fun WeeklyDayColumn(
             )
         }
 
-        if (materias.isEmpty()) {
+        if (subjects.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -451,16 +482,16 @@ fun WeeklyDayColumn(
                 )
             }
         } else {
-            materias.forEach { materia ->
-                WeeklyClassCard(materia)
+            subjects.forEach { subject ->
+                WeeklySubjectCard(subject)
             }
         }
     }
 }
 
 @Composable
-fun WeeklyClassCard(materia: Materia) {
-    val parsedColor = parseHexColor(materia.color)
+fun WeeklySubjectCard(subject: Subject) {
+    val parsedColor = parseHexColor(subject.color)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -472,7 +503,7 @@ fun WeeklyClassCard(materia: Materia) {
     ) {
         Column(modifier = Modifier.padding(10.dp)) {
             Text(
-                text = materia.nombre,
+                text = subject.name,
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -481,8 +512,8 @@ fun WeeklyClassCard(materia: Materia) {
 
             Text(
                 text = formatHourRange(
-                    materia.horaInicio.firstOrNull(),
-                    materia.horaFin.firstOrNull()
+                    subject.startHours.firstOrNull(),
+                    subject.endHours.firstOrNull()
                 ),
                 style = MaterialTheme.typography.bodySmall,
                 color = TextSecondary
@@ -491,7 +522,7 @@ fun WeeklyClassCard(materia: Materia) {
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = materia.aula.joinToString(" · ").ifBlank { "Sin aula" },
+                text = subject.classrooms.joinToString(" · ").ifBlank { "Sin aula" },
                 style = MaterialTheme.typography.bodySmall,
                 color = TextSecondary
             )
@@ -499,17 +530,22 @@ fun WeeklyClassCard(materia: Materia) {
     }
 }
 
-fun dayLabel(dia: Dia): String = dia.toString()
+fun dayLabel(day: Day): String {
+    return day.toSpanishName()
+}
 
 fun formatHourLabel(hour: Int?): String {
     if (hour == null) return "--:--"
+
     val h = hour / 100
     val m = hour % 100
+
     return String.format("%02d:%02d", h, m)
 }
 
 fun formatHourRange(start: Int?, end: Int?): String {
     if (start == null || end == null) return "--:--"
+
     return "${formatHourLabel(start)} - ${formatHourLabel(end)}"
 }
 

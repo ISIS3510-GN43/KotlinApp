@@ -1,39 +1,43 @@
 package com.techsolutions.worqee.models.clases
 
-data class Horario(
+data class Schedule(
     var id: String = "",
-    var titulo: String = "",
-    var primerDia: Dia? = null,
-    var ultimoDia: Dia? = null,
-    var fondoPantalla: String = "",
-    var materias: MutableList<Materia> = mutableListOf(),
-    var activo: Boolean = false
+    var title: String = "",
+    var firstDay: Day? = null,
+    var lastDay: Day? = null,
+    var wallpaper: String = "",
+    var subjects: MutableList<Subject> = mutableListOf(),
+    var isActive: Boolean = false
 ) {
     fun toJson(): Map<String, Any?> {
         return mapOf(
             "id" to id,
-            "titulo" to titulo,
-            "fondoPantalla" to fondoPantalla,
-            "primerDia" to primerDia?.toJson(),
-            "ultimoDia" to ultimoDia?.toJson(),
-            "materias" to materias.map { it.toJson() },
-            "activo" to activo
+            "titulo" to title,
+            "primerDia" to firstDay?.toJson(),
+            "ultimoDia" to lastDay?.toJson(),
+            "fondoPantalla" to wallpaper,
+            "materias" to subjects.map { it.toJson() },
+            "activo" to isActive
         )
     }
 
     companion object {
-        fun fromJson(json: Map<String, Any?>): Horario {
-            return Horario(
+        fun fromJson(json: Map<String, Any?>): Schedule {
+            val subjectsData = json["materias"] as? List<*>
+                ?: json["clases"] as? List<*>
+                ?: emptyList<Any?>()
+
+            return Schedule(
                 id = json["id"] as? String ?: "",
-                titulo = json["titulo"] as? String ?: "",
-                fondoPantalla = json["fondoPantalla"] as? String ?: "",
-                primerDia = (json["primerDia"] as? String)?.let { Dia.fromJson(it) },
-                ultimoDia = (json["ultimoDia"] as? String)?.let { Dia.fromJson(it) },
-                materias = ((json["clases"] as? List<*>)?.mapNotNull {
+                title = json["titulo"] as? String ?: "",
+                firstDay = (json["primerDia"] as? String)?.let { Day.fromJson(it) },
+                lastDay = (json["ultimoDia"] as? String)?.let { Day.fromJson(it) },
+                wallpaper = json["fondoPantalla"] as? String ?: "",
+                subjects = subjectsData.mapNotNull {
                     @Suppress("UNCHECKED_CAST")
-                    (Materia.fromJson(it as Map<String, Any?>))
-                } ?: emptyList()).toMutableList(),
-                activo = json["activo"] as? Boolean ?: false
+                    Subject.fromJson(it as? Map<String, Any?> ?: return@mapNotNull null)
+                }.toMutableList(),
+                isActive = json["activo"] as? Boolean ?: false
             )
         }
     }

@@ -21,7 +21,7 @@ enum class SendRequestStatus { IDLE, LOADING, SUCCESS, ERROR }
 data class FoundUserUiModel(
     val uid: String,
     val username: String,
-    val foto: String
+    val photo: String
 )
 data class FriendUiModel(
     val id: String,

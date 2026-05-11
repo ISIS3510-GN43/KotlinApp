@@ -1,6 +1,5 @@
 package com.techsolutions.worqee.viewModel
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.techsolutions.worqee.models.repository.AuthRepository
@@ -14,7 +13,7 @@ sealed class LoginUiState {
     object Loading : LoginUiState()
     object Success : LoginUiState()
     data class Error(val message: String) : LoginUiState()
-    data class Lockout(val segundosRestantes: Int) : LoginUiState()
+    data class Lockout(val remainingSeconds: Int) : LoginUiState()
 }
 
 class LoginViewModel : ViewModel() {
@@ -23,13 +22,14 @@ class LoginViewModel : ViewModel() {
     val uiState: StateFlow<LoginUiState> = _uiState
 
     private var failedAttempts = 0
-    private val LOCKOUT_MAX_ATTEMPTS = 3
-    private val LOCKOUT_DURATION_SECONDS = 30
 
-    fun login(gmail: String, password: String, context: Context) {
+    private val lockoutMaxAttempts = 3
+    private val lockoutDurationSeconds = 30
+
+    fun login(email: String, password: String) {
         if (_uiState.value is LoginUiState.Lockout) return
 
-        if (gmail.isBlank() || password.isBlank()) {
+        if (email.isBlank() || password.isBlank()) {
             _uiState.value = LoginUiState.Error("Por favor completa todos los campos")
             return
         }
@@ -37,25 +37,24 @@ class LoginViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.value = LoginUiState.Loading
 
-            val result = AuthRepository.login(gmail, password)
+            val result = AuthRepository.login(email, password)
 
             if (result.isSuccess) {
                 failedAttempts = 0
                 _uiState.value = LoginUiState.Success
             } else {
-                registrarFallo(mapLoginError(result.exceptionOrNull()))
+                registerFailedAttempt(mapLoginError(result.exceptionOrNull()))
             }
         }
     }
 
     fun register(
-        gmail: String,
+        email: String,
         password: String,
         username: String,
-        cumpleanios: String,
-        context: Context
+        birthday: String
     ) {
-        if (gmail.isBlank() || password.isBlank() || username.isBlank() || cumpleanios.isBlank()) {
+        if (email.isBlank() || password.isBlank() || username.isBlank() || birthday.isBlank()) {
             _uiState.value = LoginUiState.Error("Por favor completa todos los campos")
             return
         }
@@ -64,10 +63,10 @@ class LoginViewModel : ViewModel() {
             _uiState.value = LoginUiState.Loading
 
             val result = AuthRepository.register(
-                gmail = gmail,
+                email = email,
                 password = password,
                 username = username,
-                cumpleanios = cumpleanios
+                birthday = birthday
             )
 
             _uiState.value =
@@ -81,22 +80,22 @@ class LoginViewModel : ViewModel() {
         }
     }
 
-    private fun registrarFallo(mensaje: String) {
+    private fun registerFailedAttempt(message: String) {
         failedAttempts++
 
-        if (failedAttempts >= LOCKOUT_MAX_ATTEMPTS) {
-            iniciarLockout()
+        if (failedAttempts >= lockoutMaxAttempts) {
+            startLockout()
         } else {
-            val intentosRestantes = LOCKOUT_MAX_ATTEMPTS - failedAttempts
+            val remainingAttempts = lockoutMaxAttempts - failedAttempts
             _uiState.value =
-                LoginUiState.Error("$mensaje. Te quedan $intentosRestantes intento(s).")
+                LoginUiState.Error("$message. Te quedan $remainingAttempts intento(s).")
         }
     }
 
-    private fun iniciarLockout() {
+    private fun startLockout() {
         viewModelScope.launch {
-            for (segundos in LOCKOUT_DURATION_SECONDS downTo 1) {
-                _uiState.value = LoginUiState.Lockout(segundos)
+            for (seconds in lockoutDurationSeconds downTo 1) {
+                _uiState.value = LoginUiState.Lockout(seconds)
                 delay(1000L)
             }
 

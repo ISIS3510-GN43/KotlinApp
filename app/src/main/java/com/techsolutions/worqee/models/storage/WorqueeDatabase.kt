@@ -4,14 +4,13 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.techsolutions.worqee.models.clases.daos.AmigoDao
-import com.techsolutions.worqee.models.clases.entities.AmigoEntity
+import com.techsolutions.worqee.models.clases.daos.FriendDao
+import com.techsolutions.worqee.models.clases.entities.FriendEntity
 
-
-@Database(entities = [AmigoEntity::class], version = 1, exportSchema = false)
+@Database(entities = [FriendEntity::class], version = 1, exportSchema = false)
 abstract class WorqeeDatabase : RoomDatabase() {
 
-    abstract fun amigoDao(): AmigoDao
+    abstract fun friendDao(): FriendDao
 
     companion object {
         @Volatile

@@ -42,7 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.techsolutions.worqee.models.clases.Nota
+import com.techsolutions.worqee.models.clases.Grade
 import com.techsolutions.worqee.viewModel.SubjectGradesViewModel
 import com.techsolutions.worqee.views.theme.BackgroundLight
 import com.techsolutions.worqee.views.theme.PrimaryActionBlue
@@ -54,21 +54,22 @@ import com.techsolutions.worqee.views.theme.TextSecondary
 @Composable
 fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
     val context = LocalContext.current
-    val materia by viewModel.materiaState.collectAsState()
-    val enRiesgo by viewModel.estáEnRiesgo.collectAsState()
-    val porcentajeAgregado by viewModel.porcentajeAgregado.collectAsState()
+
+    val subject by viewModel.subjectState.collectAsState()
+    val isAtRisk by viewModel.isAtRisk.collectAsState()
+    val addedPercentage by viewModel.addedPercentage.collectAsState()
     val isOffline by viewModel.isOffline.collectAsState()
     val hasPendingSync by viewModel.hasPendingSync.collectAsState()
 
-    var nombreActividad by remember { mutableStateOf("") }
-    var nota by remember { mutableStateOf("") }
-    var porcentaje by remember { mutableStateOf("") }
-    var objetivo by remember {
-        mutableStateOf(if (materia.objetivo > 0) materia.objetivo.toString() else "")
+    var activityName by remember { mutableStateOf("") }
+    var grade by remember { mutableStateOf("") }
+    var percentage by remember { mutableStateOf("") }
+    var objective by remember {
+        mutableStateOf(if (subject.objective > 0) subject.objective.toString() else "")
     }
 
-    val promedio = materia.calcularPromedio()
-    val progressValue = materia.calcularProgreso()
+    val average = subject.calculateAverage()
+    val progressValue = subject.calculateProgress()
     val themeBlue = PrimaryActionBlue
 
     val textFieldColors = OutlinedTextFieldDefaults.colors(
@@ -86,18 +87,20 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
             TopAppBar(
                 title = {
                     Text(
-                        materia.nombre,
+                        text = subject.name,
                         color = TextPrimary,
                         style = MaterialTheme.typography.titleLarge
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = {
-                        (context as? Activity)?.finish()
-                    }) {
+                    IconButton(
+                        onClick = {
+                            (context as? Activity)?.finish()
+                        }
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = "Volver",
                             tint = TextPrimary
                         )
                     }
@@ -130,22 +133,29 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
                             contentDescription = null,
                             tint = Color(0xFFCC0000)
                         )
+
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                "Sin conexión",
+                                text = "Sin conexión",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color(0xFFCC0000)
                             )
+
                             if (hasPendingSync) {
                                 Text(
-                                    "Cambios pendientes de sincronizar",
+                                    text = "Cambios pendientes de sincronizar",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = TextSecondary
                                 )
                             }
                         }
+
                         if (hasPendingSync) {
-                            IconButton(onClick = { viewModel.syncPendingActions() }) {
+                            IconButton(
+                                onClick = {
+                                    viewModel.syncPendingActions()
+                                }
+                            ) {
                                 Icon(
                                     imageVector = Icons.Filled.Sync,
                                     contentDescription = "Sincronizar",
@@ -157,8 +167,7 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
                 }
             }
 
-            // Banner en riesgo
-            if (enRiesgo) {
+            if (isAtRisk) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -178,14 +187,16 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
                             tint = TextSecondary,
                             modifier = Modifier.padding(start = 8.dp)
                         )
+
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                "⚠ Estás en riesgo",
+                                text = "⚠ Estás en riesgo",
                                 style = MaterialTheme.typography.titleSmall,
                                 color = TextSecondary
                             )
+
                             Text(
-                                "Has completado el ${porcentajeAgregado.toInt()}% de calificaciones pero tu promedio es ${"%.2f".format(promedio)}. ¡Necesitas mejorar!",
+                                text = "Has completado el ${addedPercentage.toInt()}% de calificaciones, pero tu promedio es ${"%.2f".format(average)}. Necesitas mejorar.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = TextSecondary
                             )
@@ -194,17 +205,23 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
                 }
             }
 
-            Text("Goal", color = TextPrimary, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = "Objetivo",
+                color = TextPrimary,
+                style = MaterialTheme.typography.bodyLarge
+            )
+
             OutlinedTextField(
-                value = objetivo,
+                value = objective,
                 onValueChange = { input ->
-                    val num = input.toFloatOrNull()
-                    if (input.isEmpty() || (num != null && num in 0f..5f)) {
-                        objetivo = input
-                        viewModel.actualizarObjetivo(input)
+                    val number = input.toFloatOrNull()
+
+                    if (input.isEmpty() || (number != null && number in 0f..5f)) {
+                        objective = input
+                        viewModel.updateObjective(input)
                     }
                 },
-                label = { Text("Target grade") },
+                label = { Text("Nota objetivo") },
                 modifier = Modifier.fillMaxWidth(),
                 colors = textFieldColors
             )
@@ -217,57 +234,73 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
                 color = themeBlue,
                 trackColor = themeBlue.copy(alpha = 0.2f)
             )
-            Text("Current Average: %.2f".format(promedio), color = TextPrimary)
+
+            Text(
+                text = "Promedio actual: %.2f".format(average),
+                color = TextPrimary
+            )
 
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                "Add Activity",
+                text = "Agregar actividad",
                 style = MaterialTheme.typography.titleMedium,
                 color = TextPrimary
             )
+
             OutlinedTextField(
-                value = nombreActividad,
-                onValueChange = { nombreActividad = it },
-                label = { Text("Activity name") },
+                value = activityName,
+                onValueChange = { activityName = it },
+                label = { Text("Nombre de la actividad") },
                 modifier = Modifier.fillMaxWidth(),
                 colors = textFieldColors
             )
+
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
-                    value = nota,
+                    value = grade,
                     onValueChange = { input ->
-                        val num = input.toFloatOrNull()
-                        if (input.isEmpty() || (num != null && num in 0f..5f)) {
-                            nota = input
+                        val number = input.toFloatOrNull()
+
+                        if (input.isEmpty() || (number != null && number in 0f..5f)) {
+                            grade = input
                         }
                     },
-                    label = { Text("Grade") },
+                    label = { Text("Nota") },
                     modifier = Modifier.weight(1f),
                     colors = textFieldColors
                 )
+
                 OutlinedTextField(
-                    value = porcentaje,
+                    value = percentage,
                     onValueChange = { input ->
-                        val num = input.toFloatOrNull()
-                        if (input.isEmpty() || (num != null && num in 0.1f..100f)) {
-                            porcentaje = input
+                        val number = input.toFloatOrNull()
+
+                        if (input.isEmpty() || (number != null && number in 0.1f..100f)) {
+                            percentage = input
                         }
                     },
-                    label = { Text("Weight %") },
+                    label = { Text("Porcentaje %") },
                     modifier = Modifier.weight(1f),
                     colors = textFieldColors
                 )
             }
+
             Button(
                 onClick = {
-                    val gradeValue = nota.toFloatOrNull()
-                    val weightValue = porcentaje.toFloatOrNull()
-                    if (gradeValue != null && weightValue != null && nombreActividad.isNotBlank()) {
-                        viewModel.agregarActividad(nombreActividad, gradeValue, weightValue)
-                        nombreActividad = ""
-                        nota = ""
-                        porcentaje = ""
+                    val gradeValue = grade.toFloatOrNull()
+                    val percentageValue = percentage.toFloatOrNull()
+
+                    if (
+                        gradeValue != null &&
+                        percentageValue != null &&
+                        activityName.isNotBlank()
+                    ) {
+                        viewModel.addGrade(activityName, gradeValue, percentageValue)
+
+                        activityName = ""
+                        grade = ""
+                        percentage = ""
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -276,13 +309,13 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
                     contentColor = TextPrimary
                 )
             ) {
-                Text("Add Activity")
+                Text("Agregar actividad")
             }
 
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                "Activities",
+                text = "Actividades",
                 style = MaterialTheme.typography.titleMedium,
                 color = TextPrimary
             )
@@ -292,9 +325,9 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
                 modifier = Modifier.weight(1f)
             ) {
                 items(
-                    materia.notas,
-                    key = { it.titulo + it.porcentaje + it.grade }
-                ) { actividad: Nota ->
+                    items = subject.grades,
+                    key = { "${it.title}-${it.percentage}-${it.value}" }
+                ) { activity: Grade ->
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = SurfaceLight)
@@ -307,22 +340,29 @@ fun SubjectGradesScreen(viewModel: SubjectGradesViewModel) {
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    actividad.titulo ?: "Activity",
+                                    text = activity.title ?: "Actividad",
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = TextPrimary
                                 )
+
                                 Text(
-                                    "Weight: ${actividad.porcentaje}%",
+                                    text = "Porcentaje: ${activity.percentage}%",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = TextSecondary
                                 )
                             }
+
                             Text(
-                                "${actividad.grade}",
+                                text = "${activity.value}",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = TextPrimary
                             )
-                            IconButton(onClick = { viewModel.eliminarActividad(actividad) }) {
+
+                            IconButton(
+                                onClick = {
+                                    viewModel.deleteGrade(activity)
+                                }
+                            ) {
                                 Icon(
                                     imageVector = Icons.Filled.Delete,
                                     contentDescription = "Eliminar actividad",

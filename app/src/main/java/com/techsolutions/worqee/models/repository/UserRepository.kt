@@ -1,21 +1,25 @@
 package com.techsolutions.worqee.models.repository
+
 import android.util.Log
-import com.techsolutions.worqee.models.clases.Usuario
+import com.techsolutions.worqee.models.clases.User
 import com.techsolutions.worqee.models.network.RetrofitClient
 import com.techsolutions.worqee.models.storage.LocalStorageManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+
 object UserRepository {
 
-    suspend fun register(usuario: Usuario): Result<Usuario> {
+    private const val TAG = "UserRepository"
+
+    suspend fun register(user: User): Result<User> {
         return try {
-            val response = RetrofitClient.apiService.register(usuario)
+            val response = RetrofitClient.apiService.register(user)
 
             if (response.isSuccessful) {
-                val usuarioCreado = response.body()
+                val createdUser = response.body()
 
-                if (usuarioCreado != null) {
-                    Result.success(usuarioCreado)
+                if (createdUser != null) {
+                    Result.success(createdUser)
                 } else {
                     Result.failure(Exception("Respuesta vacía del servidor"))
                 }
@@ -28,16 +32,16 @@ object UserRepository {
         }
     }
 
-    suspend fun cargarUsuarioDesdeServidor(userId: String): Result<Usuario> {
+    suspend fun loadUserFromServer(userId: String): Result<User> {
         return withContext(Dispatchers.IO) {
             try {
-                val response = RetrofitClient.apiService.getUsuario(userId)
+                val response = RetrofitClient.apiService.getUser(userId)
 
                 if (response.isSuccessful) {
                     val data = response.body()
 
                     if (data != null) {
-                        Result.success(Usuario.fromMap(data))
+                        Result.success(User.fromMap(data))
                     } else {
                         Result.failure(Exception("Respuesta vacía del servidor"))
                     }
@@ -46,42 +50,42 @@ object UserRepository {
                 }
 
             } catch (e: Exception) {
-                Log.e("UsuarioRepository", "Error cargando usuario: ${e.message}", e)
+                Log.e(TAG, "Error loading user: ${e.message}", e)
                 Result.failure(e)
             }
         }
     }
 
-    suspend fun obtenerUidPorUsername(username: String): String? {
+    suspend fun getUidByUsername(username: String): String? {
         return try {
             val response = RetrofitClient.apiService.getUidByUsername(username)
 
             if (response.isSuccessful) {
                 response.body()?.string()?.trim()
             } else {
-                Log.e("UsuarioRepository", "Error buscando UID: ${response.code()}")
+                Log.e(TAG, "Error searching UID: ${response.code()}")
                 null
             }
 
         } catch (e: Exception) {
-            Log.e("UsuarioRepository", "Error buscando UID: ${e.message}", e)
+            Log.e(TAG, "Error searching UID: ${e.message}", e)
             null
         }
     }
 
-    suspend fun getUsuarioPorUsername(username: String): Result<Usuario> {
+    suspend fun getUserByUsername(username: String): Result<User> {
         return withContext(Dispatchers.IO) {
             try {
-                val uid = obtenerUidPorUsername(username)
+                val uid = getUidByUsername(username)
                     ?: return@withContext Result.failure(Exception("Usuario no encontrado"))
 
-                val response = RetrofitClient.apiService.getUsuario(uid)
+                val response = RetrofitClient.apiService.getUser(uid)
 
                 if (response.isSuccessful) {
                     val data = response.body()
 
                     if (data != null) {
-                        Result.success(Usuario.fromMap(data))
+                        Result.success(User.fromMap(data))
                     } else {
                         Result.failure(Exception("Respuesta vacía del servidor"))
                     }
@@ -90,53 +94,53 @@ object UserRepository {
                 }
 
             } catch (e: Exception) {
-                Log.e("UsuarioRepository", "Error obteniendo usuario: ${e.message}", e)
+                Log.e(TAG, "Error getting user: ${e.message}", e)
                 Result.failure(e)
             }
         }
     }
 
     /*
-     * Alias temporal para no romper código existente.
-     * En realidad este método recibe username, no ID.
-     * Luego se debería reemplazar por getUsuarioPorUsername().
+     * Temporary alias to avoid breaking existing code.
+     * This method actually receives a username, not an ID.
+     * Replace its usages with getUserByUsername().
      */
-    suspend fun getUsuarioPorId(username: String): Result<Usuario> {
-        return getUsuarioPorUsername(username)
+    suspend fun getUserById(username: String): Result<User> {
+        return getUserByUsername(username)
     }
 
-    fun guardarEnCaché(usuario: Usuario) {
+    fun saveToCache(user: User) {
         try {
-            LocalStorageManager.guardarUsuario(usuario)
-            Log.d("UsuarioRepository", "Usuario guardado en caché")
+            LocalStorageManager.saveUser(user)
+            Log.d(TAG, "User saved to cache")
         } catch (e: Exception) {
-            Log.e("UsuarioRepository", "Error guardando usuario en caché: ${e.message}", e)
+            Log.e(TAG, "Error saving user to cache: ${e.message}", e)
         }
     }
 
-    fun cargarDelCaché(): Usuario? {
+    fun loadFromCache(): User? {
         return try {
-            val usuario = LocalStorageManager.cargarUsuario()
+            val user = LocalStorageManager.loadUser()
 
-            if (usuario != null) {
-                Log.d("UsuarioRepository", "Usuario cargado desde caché")
+            if (user != null) {
+                Log.d(TAG, "User loaded from cache")
             } else {
-                Log.d("UsuarioRepository", "No hay usuario en caché")
+                Log.d(TAG, "No cached user found")
             }
 
-            usuario
+            user
         } catch (e: Exception) {
-            Log.e("UsuarioRepository", "Error cargando usuario desde caché: ${e.message}", e)
+            Log.e(TAG, "Error loading user from cache: ${e.message}", e)
             null
         }
     }
 
-    fun limpiarCaché() {
+    fun clearCache() {
         try {
-            LocalStorageManager.limpiarUsuario()
-            Log.d("UsuarioRepository", "Caché de usuario limpiado")
+            LocalStorageManager.clearUser()
+            Log.d(TAG, "User cache cleared")
         } catch (e: Exception) {
-            Log.e("UsuarioRepository", "Error limpiando caché: ${e.message}", e)
+            Log.e(TAG, "Error clearing cache: ${e.message}", e)
         }
     }
 }

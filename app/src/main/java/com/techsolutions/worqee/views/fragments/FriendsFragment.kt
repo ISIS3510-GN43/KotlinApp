@@ -21,10 +21,10 @@ class FriendsFragment : Fragment() {
             WorqeeTheme {
                 FriendsScreen(
                     onNavigateToGrades = {
-                        (activity as? MainActivity)?.mostrarGrades()
+                        (activity as? MainActivity)?.showGrades()
                     },
                     onNavigateToSchedule = {
-                        (activity as? MainActivity)?.mostrarSchedule()
+                        (activity as? MainActivity)?.showSchedule()
                     }
                 )
             }

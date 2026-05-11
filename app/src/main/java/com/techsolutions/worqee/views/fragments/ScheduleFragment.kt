@@ -20,10 +20,10 @@ class ScheduleFragment : Fragment() {
             WorqeeTheme {
                 ScheduleScreen(
                     onLogout = {
-                        (activity as? MainActivity)?.mostrarLogin()
+                        (activity as? MainActivity)?.showLogin()
                     },
                     onNavigateToFriends = {
-                        (activity as? MainActivity)?.mostrarFriends()
+                        (activity as? MainActivity)?.showFriends()
                     }
                 )
             }

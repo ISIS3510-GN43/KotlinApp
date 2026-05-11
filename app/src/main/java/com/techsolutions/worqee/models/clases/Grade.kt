@@ -1,24 +1,24 @@
 package com.techsolutions.worqee.models.clases
 
-data class Nota(
-    var grade: Double,
-    var porcentaje: Double,
-    var titulo: String? = null
+data class Grade(
+    var value: Double = 0.0,
+    var percentage: Double = 0.0,
+    var title: String? = null
 ) {
     fun toJson(): Map<String, Any?> {
         return mapOf(
-            "grade" to grade,
-            "porcentaje" to porcentaje,
-            "titulo" to titulo
+            "grade" to value,
+            "porcentaje" to percentage,
+            "titulo" to title
         )
     }
 
     companion object {
-        fun fromJson(json: Map<String, Any?>): Nota {
-            return Nota(
-                grade = (json["grade"] as Number).toDouble(),
-                porcentaje = (json["porcentaje"] as Number).toDouble(),
-                titulo = json["titulo"] as? String
+        fun fromJson(json: Map<String, Any?>): Grade {
+            return Grade(
+                value = (json["grade"] as? Number)?.toDouble() ?: 0.0,
+                percentage = (json["porcentaje"] as? Number)?.toDouble() ?: 0.0,
+                title = json["titulo"] as? String
             )
         }
     }
