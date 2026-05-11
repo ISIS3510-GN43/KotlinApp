@@ -5,10 +5,11 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.core.content.edit
 import com.google.gson.Gson
-import com.techsolutions.worqee.models.clases.Usuario
+import com.techsolutions.worqee.models.clases.User
 
 object LocalStorageManager {
 
+    private const val TAG = "LocalStorage"
     private const val PREFS_NAME = "worqee_prefs"
     private const val USER_KEY = "usuario_data"
     private const val USER_ID_KEY = "userId"
@@ -18,74 +19,74 @@ object LocalStorageManager {
 
     fun init(context: Context) {
         prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        Log.d("LocalStorage", "LocalStorageManager inicializado")
+        Log.d(TAG, "LocalStorageManager initialized")
     }
 
-    fun guardarUserId(userId: String) {
+    fun saveUserId(userId: String) {
         prefs.edit {
             putString(USER_ID_KEY, userId)
         }
-        Log.d("LocalStorage", "UserId guardado en sesión")
+        Log.d(TAG, "User ID saved in session")
     }
 
-    fun cargarUserId(): String? {
+    fun loadUserId(): String? {
         return prefs.getString(USER_ID_KEY, null)
     }
 
-    fun limpiarSesion() {
+    fun clearSession() {
         prefs.edit {
             remove(USER_ID_KEY)
             remove(USER_KEY)
         }
-        Log.d("LocalStorage", "Sesión limpiada")
+        Log.d(TAG, "Session cleared")
     }
 
-    fun guardarUsuario(usuario: Usuario) {
+    fun saveUser(user: User) {
         try {
-            val json = gson.toJson(usuario)
+            val json = gson.toJson(user)
 
             prefs.edit {
                 putString(USER_KEY, json)
             }
 
-            val cantidadMaterias = usuario.horarios.sumOf { it.materias.size }
-            Log.d("LocalStorage", "Usuario guardado en caché - $cantidadMaterias materias")
+            val subjectCount = user.schedules.sumOf { it.subjects.size }
+            Log.d(TAG, "User saved to cache - $subjectCount subjects")
         } catch (e: Exception) {
-            Log.e("LocalStorage", "Error guardando usuario: ${e.message}", e)
+            Log.e(TAG, "Error saving user: ${e.message}", e)
         }
     }
 
-    fun cargarUsuario(): Usuario? {
+    fun loadUser(): User? {
         return try {
             val json = prefs.getString(USER_KEY, null)
 
             if (json != null) {
-                val usuario = gson.fromJson(json, Usuario::class.java)
-                val cantidadMaterias = usuario.horarios.sumOf { it.materias.size }
+                val user = gson.fromJson(json, User::class.java)
+                val subjectCount = user.schedules.sumOf { it.subjects.size }
 
-                Log.d("LocalStorage", "Usuario cargado desde caché - $cantidadMaterias materias")
-                usuario
+                Log.d(TAG, "User loaded from cache - $subjectCount subjects")
+                user
             } else {
-                Log.d("LocalStorage", "No hay usuario en caché")
+                Log.d(TAG, "No cached user found")
                 null
             }
         } catch (e: Exception) {
-            Log.e("LocalStorage", "Error cargando usuario: ${e.message}", e)
+            Log.e(TAG, "Error loading user: ${e.message}", e)
             null
         }
     }
 
-    fun limpiarUsuario() {
+    fun clearUser() {
         prefs.edit {
             remove(USER_KEY)
         }
-        Log.d("LocalStorage", "Usuario limpiado de caché")
+        Log.d(TAG, "User removed from cache")
     }
 
-    fun limpiarCaché() {
+    fun clearCache() {
         prefs.edit {
             clear()
         }
-        Log.d("LocalStorage", "Caché limpiado")
+        Log.d(TAG, "Cache cleared")
     }
 }

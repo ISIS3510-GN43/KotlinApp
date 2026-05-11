@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CloudOff
@@ -33,28 +34,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.lazy.items
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import com.techsolutions.worqee.models.clases.Materia
-import com.techsolutions.worqee.views.fragments.SubjectGradesActivity
+import com.techsolutions.worqee.models.clases.Subject
+import com.techsolutions.worqee.utils.ConnectivityHelper
 import com.techsolutions.worqee.viewModel.GradesViewModel
+import com.techsolutions.worqee.views.fragments.SubjectGradesActivity
 import com.techsolutions.worqee.views.theme.BackgroundLight
 import com.techsolutions.worqee.views.theme.PrimaryActionBlue
 import com.techsolutions.worqee.views.theme.SurfaceLight
 import com.techsolutions.worqee.views.theme.TextPrimary
 import com.techsolutions.worqee.views.theme.TextSecondary
-import com.techsolutions.worqee.utils.ConnectivityHelper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GradesScreen(viewModel: GradesViewModel) {
-
     val context = LocalContext.current
-    val materias by viewModel.materiasState.collectAsState()
-    val notasNecesarias by viewModel.notasNecesarias.collectAsState()
 
-    // ✅ Detectar conectividad
+    val subjects by viewModel.subjectsState.collectAsState()
+    val requiredGrades by viewModel.requiredGrades.collectAsState()
+
     val isOffline = remember { !ConnectivityHelper.isOnline(context) }
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
@@ -66,18 +65,20 @@ fun GradesScreen(viewModel: GradesViewModel) {
             TopAppBar(
                 title = {
                     Text(
-                        "Grades",
+                        text = "Notas",
                         color = TextPrimary,
                         style = MaterialTheme.typography.titleLarge
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = {
-                        (context as? android.app.Activity)?.finish()
-                    }) {
+                    IconButton(
+                        onClick = {
+                            (context as? android.app.Activity)?.finish()
+                        }
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = "Volver",
                             tint = TextPrimary
                         )
                     }
@@ -111,14 +112,16 @@ fun GradesScreen(viewModel: GradesViewModel) {
                                 contentDescription = null,
                                 tint = Color(0xFFCC0000)
                             )
+
                             Column {
                                 Text(
-                                    "Sin conexión",
+                                    text = "Sin conexión",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = Color(0xFFCC0000)
                                 )
+
                                 Text(
-                                    "Mostrando datos guardados localmente",
+                                    text = "Mostrando datos guardados localmente",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = TextSecondary
                                 )
@@ -128,15 +131,19 @@ fun GradesScreen(viewModel: GradesViewModel) {
                 }
             }
 
-            items(materias) { materia ->
-                MateriaProgressRow(
-                    materia = materia,
-                    notaNecesaria = notasNecesarias[materia.id],
-                    onCalcularNota = { viewModel.calcularNotaNecesaria(materia) },
+            items(subjects) { subject ->
+                SubjectProgressRow(
+                    subject = subject,
+                    requiredGrade = requiredGrades[subject.id],
+                    onCalculateRequiredGrade = {
+                        viewModel.calculateRequiredGrade(subject)
+                    },
                     onClick = {
                         val intent = Intent(context, SubjectGradesActivity::class.java)
-                        intent.putExtra("materiaId", materia.id)
-                        intent.putExtra("materiaNombre", materia.nombre)
+
+                        intent.putExtra("subjectId", subject.id)
+                        intent.putExtra("subjectName", subject.name)
+
                         context.startActivity(intent)
                     }
                 )
@@ -144,8 +151,8 @@ fun GradesScreen(viewModel: GradesViewModel) {
 
             item {
                 BusinessQuestionCard(
-                    promedio = viewModel.obtenerPromedioTiempoCalculo(),
-                    superaObjetivo = viewModel.superaObjetivo100ms()
+                    average = viewModel.getAverageCalculationTime(),
+                    exceedsObjective = viewModel.exceeds100msObjective()
                 )
             }
         }
@@ -153,14 +160,14 @@ fun GradesScreen(viewModel: GradesViewModel) {
 }
 
 @Composable
-fun MateriaProgressRow(
-    materia: Materia,
-    notaNecesaria: Float?,
-    onCalcularNota: () -> Unit,
+fun SubjectProgressRow(
+    subject: Subject,
+    requiredGrade: Float?,
+    onCalculateRequiredGrade: () -> Unit,
     onClick: () -> Unit
 ) {
     val themeBlue = PrimaryActionBlue
-    val progress = materia.calcularProgreso()
+    val progress = subject.calculateProgress()
 
     Card(
         modifier = Modifier
@@ -180,12 +187,14 @@ fun MateriaProgressRow(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = materia.nombre,
+                    text = subject.name,
                     style = MaterialTheme.typography.titleMedium,
                     color = TextPrimary,
                     modifier = Modifier.weight(1f)
                 )
+
                 val percentInt = (progress * 100).toInt()
+
                 Text(
                     text = "$percentInt%",
                     style = MaterialTheme.typography.bodyMedium,
@@ -208,33 +217,40 @@ fun MateriaProgressRow(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                TextButton(onClick = { onCalcularNota() }) {
+                TextButton(
+                    onClick = {
+                        onCalculateRequiredGrade()
+                    }
+                ) {
                     Text(
-                        "How much do I need to pass?",
+                        text = "¿Cuánto necesito para pasar?",
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary
                     )
                 }
 
-                notaNecesaria?.let { nota ->
+                requiredGrade?.let { grade ->
                     when {
-                        nota == -1f -> Text(
+                        grade == -1f -> Text(
                             text = "Define un objetivo primero",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary
                         )
-                        nota == -2f -> Text(
+
+                        grade == -2f -> Text(
                             text = "Sin actividades aún",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary
                         )
-                        nota <= 0f -> Text(
+
+                        grade <= 0f -> Text(
                             text = "¡Ya pasaste!",
                             style = MaterialTheme.typography.bodySmall,
                             color = Color(0xFF2E7D32)
                         )
+
                         else -> Text(
-                            text = "Necesitas: ${"%.1f".format(nota)}",
+                            text = "Necesitas: ${"%.1f".format(grade)}",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextPrimary
                         )
@@ -246,17 +262,22 @@ fun MateriaProgressRow(
 }
 
 @Composable
-fun BusinessQuestionCard(promedio: Long, superaObjetivo: Boolean) {
-
-    if (promedio == 0L) return
+fun BusinessQuestionCard(
+    average: Long,
+    exceedsObjective: Boolean
+) {
+    if (average == 0L) return
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (superaObjetivo) Color.Red.copy(alpha = 0.1f)
-            else Color.Green.copy(alpha = 0.1f)
+            containerColor = if (exceedsObjective) {
+                Color.Red.copy(alpha = 0.1f)
+            } else {
+                Color.Green.copy(alpha = 0.1f)
+            }
         )
     ) {
         Column(
@@ -266,20 +287,25 @@ fun BusinessQuestionCard(promedio: Long, superaObjetivo: Boolean) {
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = "📊 Business Question",
+                text = "📊 Pregunta de negocio",
                 style = MaterialTheme.typography.titleSmall,
                 color = TextPrimary
             )
+
             Text(
-                text = "Tiempo promedio de cálculo: ${promedio}ms",
+                text = "Tiempo promedio de cálculo: ${average}ms",
                 style = MaterialTheme.typography.bodyMedium,
                 color = TextPrimary
             )
+
             Text(
-                text = if (superaObjetivo) "⚠️ Supera el objetivo de 100ms"
-                else "✅ Dentro del objetivo de 100ms",
+                text = if (exceedsObjective) {
+                    "⚠️ Supera el objetivo de 100ms"
+                } else {
+                    "✅ Dentro del objetivo de 100ms"
+                },
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (superaObjetivo) Color.Red else Color.Green
+                color = if (exceedsObjective) Color.Red else Color.Green
             )
         }
     }

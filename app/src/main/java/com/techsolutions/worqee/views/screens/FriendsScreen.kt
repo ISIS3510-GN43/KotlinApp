@@ -77,7 +77,7 @@ fun FriendsScreen(
             client.lastLocation.addOnSuccessListener { location ->
                 val lat = location?.latitude ?: 4.60178
                 val lng = location?.longitude ?: -74.06582
-                val (url, nombreEdificio) = viewModel.construirUrlEdificioMasCercano(lat, lng)
+                val (url, nombreEdificio) = viewModel.buildNearestBuildingUrl(lat, lng)
                 Toast.makeText(context, "Navegando a: $nombreEdificio", Toast.LENGTH_SHORT).show()
                 context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
             }
@@ -94,7 +94,7 @@ fun FriendsScreen(
             client.lastLocation.addOnSuccessListener { location ->
                 val lat = location?.latitude ?: 4.60178
                 val lng = location?.longitude ?: -74.06582
-                val (url, nombreEdificio) = viewModel.construirUrlEdificioMasCercano(lat, lng)
+                val (url, nombreEdificio) = viewModel.buildNearestBuildingUrl(lat, lng)
                 Toast.makeText(context, "Navegando a: $nombreEdificio", Toast.LENGTH_SHORT).show()
                 context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
             }

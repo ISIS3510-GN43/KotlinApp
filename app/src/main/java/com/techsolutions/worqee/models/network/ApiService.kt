@@ -1,9 +1,7 @@
 package com.techsolutions.worqee.models.network
 
-// Service Adapter
-
-import com.techsolutions.worqee.models.clases.Metrica
-import com.techsolutions.worqee.models.clases.Usuario
+import com.techsolutions.worqee.models.clases.Metric
+import com.techsolutions.worqee.models.clases.User
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -14,24 +12,24 @@ import retrofit2.http.Path
 interface ApiService {
 
     @GET("usuarios/{userId}")
-        suspend fun getUsuario(
-            @Path("userId") userId: String
-        ): Response<Map<String, Any?>>
+    suspend fun getUser(
+        @Path("userId") userId: String
+    ): Response<Map<String, Any?>>
 
     @POST("login")
     suspend fun login(
         @Body body: Map<String, String>
-    ): Response<Usuario>
+    ): Response<User>
 
     @POST("usuarios/registrar")
     suspend fun register(
-        @Body usuario: Usuario
-    ): Response<Usuario>
+        @Body user: User
+    ): Response<User>
 
     @GET("usuarios/{id}")
-    suspend fun getUsuarioById(
+    suspend fun getUserById(
         @Path("id") id: String
-    ): Response<Usuario>
+    ): Response<User>
 
     @GET("usuarios/codigo/username/{username}")
     suspend fun getUidByUsername(
@@ -39,22 +37,18 @@ interface ApiService {
     ): Response<ResponseBody>
 
     @GET("usuarios/{userId}/amigos")
-    suspend fun getAmigos(
+    suspend fun getFriends(
         @Path("userId") userId: String
     ): Response<List<Map<String, Any?>>>
 
     @POST("usuarios/{userId}/solicitudes/{amigoid}")
-    suspend fun enviarSolicitud(
+    suspend fun sendFriendRequest(
         @Path("userId") userId: String,
-        @Path("amigoid") amigoid: String
+        @Path("amigoid") friendId: String
     ): Response<ResponseBody>
 
-
-    //Pipeline
     @POST("MetricaFriends/nuevo")
-    suspend fun crearNuevaMetrica(
-        @Body request: Metrica
+    suspend fun createNewMetric(
+        @Body request: Metric
     ): Response<ResponseBody>
-
-
 }

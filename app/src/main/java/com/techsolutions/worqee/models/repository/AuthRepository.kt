@@ -1,6 +1,7 @@
 package com.techsolutions.worqee.models.repository
+
 import com.google.firebase.auth.FirebaseAuth
-import com.techsolutions.worqee.models.clases.Usuario
+import com.techsolutions.worqee.models.clases.User
 import com.techsolutions.worqee.models.storage.LocalStorageManager
 import kotlinx.coroutines.tasks.await
 
@@ -8,29 +9,29 @@ object AuthRepository {
 
     private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
 
-    suspend fun login(gmail: String, password: String): Result<Usuario> {
+    suspend fun login(email: String, password: String): Result<User> {
         return try {
             val authResult = firebaseAuth
-                .signInWithEmailAndPassword(gmail, password)
+                .signInWithEmailAndPassword(email, password)
                 .await()
 
             val userId = authResult.user?.uid
                 ?: return Result.failure(Exception("No se pudo obtener el ID del usuario autenticado"))
 
-            LocalStorageManager.guardarUserId(userId)
+            LocalStorageManager.saveUserId(userId)
 
-            val usuarioResult = UsuarioRepository.cargarUsuarioDesdeServidor(userId)
+            val userResult = UserRepository.loadUserFromServer(userId)
 
-            if (usuarioResult.isSuccess) {
-                val usuario = usuarioResult.getOrThrow()
+            if (userResult.isSuccess) {
+                val user = userResult.getOrThrow()
 
-                Usuario.setInstance(usuario) // temporal mientras eliminamos el Singleton de Usuario
-                UsuarioRepository.guardarEnCaché(usuario)
+                User.setInstance(user)
+                UserRepository.saveToCache(user)
 
-                Result.success(usuario)
+                Result.success(user)
             } else {
                 Result.failure(
-                    usuarioResult.exceptionOrNull()
+                    userResult.exceptionOrNull()
                         ?: Exception("No se pudo cargar el usuario desde el servidor")
                 )
             }
@@ -41,33 +42,33 @@ object AuthRepository {
     }
 
     suspend fun register(
-        gmail: String,
+        email: String,
         password: String,
         username: String,
-        cumpleanios: String
-    ): Result<Usuario> {
+        birthday: String
+    ): Result<User> {
         return try {
-            val fotoDefault =
+            val defaultPhotoUrl =
                 "https://firebasestorage.googleapis.com/v0/b/techsolutions-eb89a.firebasestorage.app/o/Fotos%20de%20perfil%2Fuser_profile_photo.png?alt=media&token=63c45849-4d40-4805-a222-0e130c588bc8"
 
-            val nuevoUsuario = Usuario(
-                gmail = gmail,
+            val newUser = User(
+                email = email,
                 password = password,
                 username = username,
-                cumpleanios = cumpleanios,
-                foto = fotoDefault
+                birthday = birthday,
+                photo = defaultPhotoUrl
             )
 
-            val result = UsuarioRepository.register(nuevoUsuario)
+            val result = UserRepository.register(newUser)
 
             if (result.isSuccess) {
-                val usuarioCreado = result.getOrThrow()
+                val createdUser = result.getOrThrow()
 
-                LocalStorageManager.guardarUserId(usuarioCreado.id)
-                Usuario.setInstance(usuarioCreado) // temporal
-                UsuarioRepository.guardarEnCaché(usuarioCreado)
+                LocalStorageManager.saveUserId(createdUser.id)
+                User.setInstance(createdUser)
+                UserRepository.saveToCache(createdUser)
 
-                Result.success(usuarioCreado)
+                Result.success(createdUser)
             } else {
                 Result.failure(
                     result.exceptionOrNull()
@@ -83,8 +84,8 @@ object AuthRepository {
     suspend fun logout() {
         firebaseAuth.signOut()
 
-        Usuario.clearInstance() // temporal
-        LocalStorageManager.limpiarSesion()
-        UsuarioRepository.limpiarCaché()
+        User.clearInstance()
+        LocalStorageManager.clearSession()
+        UserRepository.clearCache()
     }
 }

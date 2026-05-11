@@ -2,42 +2,43 @@ package com.techsolutions.worqee.models.storage
 
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.techsolutions.worqee.models.clases.Horario
-import com.techsolutions.worqee.models.clases.Usuario
-import com.techsolutions.worqee.models.clases.entities.AmigoEntity
+import com.techsolutions.worqee.models.clases.Schedule
+import com.techsolutions.worqee.models.clases.User
+import com.techsolutions.worqee.models.clases.entities.FriendEntity
 
 private val gson = Gson()
 
-fun Usuario.toAmigoEntity(): AmigoEntity {
-    return AmigoEntity(
+fun User.toFriendEntity(): FriendEntity {
+    return FriendEntity(
         id = id,
-        gmail = gmail,
+        email = email,
         username = username,
         password = password,
-        cumpleanios = cumpleanios,
-        amigosIdsJson = gson.toJson(amigosIds),
-        amigosUsernamesJson = gson.toJson(amigosUsernames),
-        horariosJson = gson.toJson(horarios.map { it.toJson() }),
-        solicitudesJson = gson.toJson(solicitudes)
+        birthday = birthday,
+        friendsIdsJson = gson.toJson(friendsIds),
+        friendsUsernamesJson = gson.toJson(friendsUsernames),
+        schedulesJson = gson.toJson(schedules.map { it.toJson() }),
+        requestsJson = gson.toJson(requests)
     )
 }
 
-fun AmigoEntity.toUsuario(): Usuario {
-    val listType = object : TypeToken<List<String>>() {}.type
-    val horariosRawType = object : TypeToken<List<Map<String, Any?>>>() {}.type
+fun FriendEntity.toUser(): User {
+    val stringListType = object : TypeToken<List<String>>() {}.type
+    val schedulesRawType = object : TypeToken<List<Map<String, Any?>>>() {}.type
 
-    val horariosRaw: List<Map<String, Any?>> = gson.fromJson(horariosJson, horariosRawType)
+    val schedulesRaw: List<Map<String, Any?>> = gson.fromJson(schedulesJson, schedulesRawType)
+        ?: emptyList()
 
-    return Usuario(
+    return User(
         id = id,
-        gmail = gmail,
+        email = email,
         username = username,
         password = password,
-        cumpleanios = cumpleanios,
-        amigosIds = gson.fromJson(amigosIdsJson, listType),
-        amigosUsernames = gson.fromJson(amigosUsernamesJson, listType),
-        horarios = horariosRaw.map { Horario.fromJson(it) }.toMutableList(),
-        solicitudes = gson.fromJson(solicitudesJson, listType),
-        foto = "" // excluida intencionalmente
+        birthday = birthday,
+        friendsIds = gson.fromJson(friendsIdsJson, stringListType) ?: mutableListOf(),
+        friendsUsernames = gson.fromJson(friendsUsernamesJson, stringListType) ?: mutableListOf(),
+        schedules = schedulesRaw.map { Schedule.fromJson(it) }.toMutableList(),
+        requests = gson.fromJson(requestsJson, stringListType) ?: mutableListOf(),
+        photo = "" // intentionally excluded
     )
 }

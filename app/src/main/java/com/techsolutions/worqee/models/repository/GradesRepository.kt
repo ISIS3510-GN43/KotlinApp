@@ -2,51 +2,51 @@ package com.techsolutions.worqee.models.repository
 
 import android.content.Context
 import com.techsolutions.worqee.models.analytics.GradeUsageTracker
-import com.techsolutions.worqee.models.clases.Materia
-import com.techsolutions.worqee.models.clases.Nota
+import com.techsolutions.worqee.models.clases.Grade
+import com.techsolutions.worqee.models.clases.Subject
 import com.techsolutions.worqee.models.storage.PendingAction
 import com.techsolutions.worqee.models.storage.PendingSyncManager
 import com.techsolutions.worqee.utils.ConnectivityHelper
 
 object GradesRepository {
 
-    fun getMateriasActivas(): List<Materia> {
-        return ScheduleRepository.getMateriasActivas().map {
-            it.copy(notas = it.notas.toMutableList())
+    fun getActiveSubjects(): List<Subject> {
+        return ScheduleRepository.getActiveSubjects().map {
+            it.copy(grades = it.grades.toMutableList())
         }
     }
 
-    fun findMateriaByIdOrName(
-        materiaId: String?,
-        materiaNombre: String?
-    ): Materia? {
-        val horario = ScheduleRepository.getHorarioActivo() ?: return null
+    fun findSubjectByIdOrName(
+        subjectId: String?,
+        subjectName: String?
+    ): Subject? {
+        val schedule = ScheduleRepository.getActiveSchedule() ?: return null
 
-        return horario.materias.find { it.id == materiaId }
-            ?: horario.materias.find { it.nombre == materiaNombre }
+        return schedule.subjects.find { it.id == subjectId }
+            ?: schedule.subjects.find { it.name == subjectName }
     }
 
-    fun agregarActividad(
+    fun addGrade(
         context: Context,
-        materia: Materia,
-        nombre: String,
-        nota: Float,
-        porcentaje: Float
+        subject: Subject,
+        title: String,
+        value: Float,
+        percentage: Float
     ): GradeOperationResult {
-        val nuevaNota = Nota(
-            grade = nota.toDouble(),
-            porcentaje = porcentaje.toDouble(),
-            titulo = nombre
+        val newGrade = Grade(
+            value = value.toDouble(),
+            percentage = percentage.toDouble(),
+            title = title
         )
 
-        materia.notas.add(nuevaNota)
-        guardarUsuarioEnCache()
+        subject.grades.add(newGrade)
+        saveUserInCache()
 
         return if (ConnectivityHelper.isOnline(context)) {
             GradeUsageTracker.trackGradeAdded(
-                materiaId = materia.id,
-                materiaNombre = materia.nombre,
-                notaTitulo = nombre
+                subjectId = subject.id,
+                subjectName = subject.name,
+                gradeTitle = title
             )
 
             GradeOperationResult.Success(
@@ -57,11 +57,11 @@ object GradesRepository {
             PendingSyncManager.addPendingAction(
                 PendingAction(
                     type = "add",
-                    materiaId = materia.id,
-                    materiaNombre = materia.nombre,
-                    notaTitulo = nombre,
-                    notaGrade = nota.toDouble(),
-                    notaPorcentaje = porcentaje.toDouble()
+                    subjectId = subject.id,
+                    subjectName = subject.name,
+                    gradeTitle = title,
+                    gradeValue = value.toDouble(),
+                    gradePercentage = percentage.toDouble()
                 )
             )
 
@@ -72,13 +72,13 @@ object GradesRepository {
         }
     }
 
-    fun eliminarActividad(
+    fun deleteGrade(
         context: Context,
-        materia: Materia,
-        nota: Nota
+        subject: Subject,
+        grade: Grade
     ): GradeOperationResult {
-        materia.notas.remove(nota)
-        guardarUsuarioEnCache()
+        subject.grades.remove(grade)
+        saveUserInCache()
 
         return if (ConnectivityHelper.isOnline(context)) {
             GradeOperationResult.Success(
@@ -89,11 +89,11 @@ object GradesRepository {
             PendingSyncManager.addPendingAction(
                 PendingAction(
                     type = "delete",
-                    materiaId = materia.id,
-                    materiaNombre = materia.nombre,
-                    notaTitulo = nota.titulo ?: "",
-                    notaGrade = nota.grade,
-                    notaPorcentaje = nota.porcentaje
+                    subjectId = subject.id,
+                    subjectName = subject.name,
+                    gradeTitle = grade.title ?: "",
+                    gradeValue = grade.value,
+                    gradePercentage = grade.percentage
                 )
             )
 
@@ -104,19 +104,19 @@ object GradesRepository {
         }
     }
 
-    fun actualizarObjetivo(
+    fun updateObjective(
         context: Context,
-        materia: Materia,
-        objetivo: Double
+        subject: Subject,
+        objective: Double
     ): GradeOperationResult {
-        materia.objetivo = objetivo
-        guardarUsuarioEnCache()
+        subject.objective = objective
+        saveUserInCache()
 
         return if (ConnectivityHelper.isOnline(context)) {
             GradeUsageTracker.trackObjectiveUpdated(
-                materiaId = materia.id,
-                materiaNombre = materia.nombre,
-                nuevoObjetivo = objetivo
+                subjectId = subject.id,
+                subjectName = subject.name,
+                newObjective = objective
             )
 
             GradeOperationResult.Success(
@@ -145,16 +145,16 @@ object GradesRepository {
             when (action.type) {
                 "add" -> {
                     GradeUsageTracker.trackGradeAdded(
-                        materiaId = action.materiaId,
-                        materiaNombre = action.materiaNombre,
-                        notaTitulo = action.notaTitulo
+                        subjectId = action.subjectId,
+                        subjectName = action.subjectName,
+                        gradeTitle = action.gradeTitle
                     )
                 }
 
                 "delete" -> {
                     /*
-                     * Si luego tienen endpoint real para borrar notas,
-                     * aquí se llama. Por ahora solo limpiamos la acción pendiente.
+                     * If a real endpoint for deleting grades is added later,
+                     * call it here. For now, only clear the pending action.
                      */
                 }
             }
@@ -168,31 +168,31 @@ object GradesRepository {
         )
     }
 
-    fun calcularNotaNecesaria(materia: Materia): Float {
-        if (materia.objetivo <= 0.0) return -1f
-        if (materia.notas.isEmpty()) return -2f
+    fun calculateRequiredGrade(subject: Subject): Float {
+        if (subject.objective <= 0.0) return -1f
+        if (subject.grades.isEmpty()) return -2f
 
-        val notaActual = materia.notas.sumOf {
-            it.grade * (it.porcentaje / 100.0)
+        val currentGrade = subject.grades.sumOf {
+            it.value * (it.percentage / 100.0)
         }.toFloat()
 
-        val porcentajeUsado = materia.notas.sumOf {
-            it.porcentaje
+        val usedPercentage = subject.grades.sumOf {
+            it.percentage
         }.toFloat()
 
-        val porcentajeRestante = 100f - porcentajeUsado
+        val remainingPercentage = 100f - usedPercentage
 
-        return if (porcentajeRestante <= 0f) {
-            if (notaActual >= materia.objetivo.toFloat()) {
+        return if (remainingPercentage <= 0f) {
+            if (currentGrade >= subject.objective.toFloat()) {
                 0f
             } else {
-                notaActual
+                currentGrade
             }
         } else {
-            val notaFaltante =
-                (materia.objetivo.toFloat() - notaActual) / (porcentajeRestante / 100f)
+            val missingGrade =
+                (subject.objective.toFloat() - currentGrade) / (remainingPercentage / 100f)
 
-            notaFaltante.coerceIn(0f, 5f)
+            missingGrade.coerceIn(0f, 5f)
         }
     }
 
@@ -204,11 +204,11 @@ object GradesRepository {
         return PendingSyncManager.hasPendingActions()
     }
 
-    private fun guardarUsuarioEnCache() {
-        val usuario = SessionRepository.getCurrentUser()
+    private fun saveUserInCache() {
+        val user = SessionRepository.getCurrentUser()
 
-        if (usuario != null) {
-            UsuarioRepository.guardarEnCaché(usuario)
+        if (user != null) {
+            UserRepository.saveToCache(user)
         }
     }
 }

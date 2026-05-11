@@ -21,11 +21,14 @@ class MainViewModel : ViewModel() {
 
     fun restoreSession() {
         viewModelScope.launch {
-            val usuario = SessionRepository.restoreSession()
+            val user = SessionRepository.restoreSession()
 
             _uiState.value =
-                if (usuario != null) MainUiState.Authenticated
-                else MainUiState.Unauthenticated
+                if (user != null) {
+                    MainUiState.Authenticated
+                } else {
+                    MainUiState.Unauthenticated
+                }
         }
     }
 }

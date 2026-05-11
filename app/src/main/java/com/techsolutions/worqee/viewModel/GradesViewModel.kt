@@ -2,99 +2,108 @@ package com.techsolutions.worqee.viewModel
 
 import androidx.lifecycle.ViewModel
 import com.google.firebase.perf.FirebasePerformance
-import com.techsolutions.worqee.models.clases.Materia
-import com.techsolutions.worqee.models.clases.Usuario
+import com.techsolutions.worqee.models.clases.Subject
+import com.techsolutions.worqee.models.clases.User
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class GradesViewModel : ViewModel() {
 
-    private val _materias = MutableStateFlow<List<Materia>>(emptyList())
-    val materiasState: StateFlow<List<Materia>> = _materias.asStateFlow()
+    private val _subjects = MutableStateFlow<List<Subject>>(emptyList())
+    val subjectsState: StateFlow<List<Subject>> = _subjects.asStateFlow()
 
-    // Key: materia.id (no nombre, para evitar colisiones con materias duplicadas)
-    // Valores especiales: -1f = sin objetivo, -2f = sin actividades
-    private val _notasNecesarias = MutableStateFlow<Map<String, Float>>(emptyMap())
-    val notasNecesarias: StateFlow<Map<String, Float>> = _notasNecesarias.asStateFlow()
+    // Key: subject.id, not name, to avoid collisions with duplicate subjects.
+    // Special values: -1f = no objective, -2f = no grades.
+    private val _requiredGrades = MutableStateFlow<Map<String, Float>>(emptyMap())
+    val requiredGrades: StateFlow<Map<String, Float>> = _requiredGrades.asStateFlow()
 
-    val tiemposCalculo = mutableListOf<Long>()
+    val calculationTimes = mutableListOf<Long>()
 
     init {
-        loadMaterias()
+        loadSubjects()
     }
 
-    fun loadMaterias() {
+    fun loadSubjects() {
         try {
-            val usuario = Usuario.getInstance()
-            val horarioActivo = usuario.horarios.firstOrNull { it.activo }
-                ?: usuario.horarios.firstOrNull()
-            val materiasCopia = horarioActivo?.materias?.map {
-                it.copy(notas = it.notas.toMutableList())
+            val user = User.getInstance()
+            val activeSchedule = user.schedules.firstOrNull { it.isActive }
+                ?: user.schedules.firstOrNull()
+
+            val subjectsCopy = activeSchedule?.subjects?.map {
+                it.copy(grades = it.grades.toMutableList())
             } ?: emptyList()
-            _materias.value = materiasCopia
+
+            _subjects.value = subjectsCopy
         } catch (e: Exception) {
-            _materias.value = emptyList()
+            _subjects.value = emptyList()
         }
     }
 
     fun refresh() {
-        _notasNecesarias.value = emptyMap()
-        loadMaterias()
+        _requiredGrades.value = emptyMap()
+        loadSubjects()
     }
 
-    fun calcularNotaNecesaria(materia: Materia): Float {
-        // Caso 1: sin objetivo definido
-        if (materia.objetivo <= 0.0) {
-            _notasNecesarias.value = _notasNecesarias.value + (materia.id to -1f)
+    fun calculateRequiredGrade(subject: Subject): Float {
+        if (subject.objective <= 0.0) {
+            _requiredGrades.value = _requiredGrades.value + (subject.id to -1f)
             return -1f
         }
 
-        // Caso 2: sin actividades — no hay notas que respalden un "ya pasaste"
-        if (materia.notas.isEmpty()) {
-            _notasNecesarias.value = _notasNecesarias.value + (materia.id to -2f)
+        if (subject.grades.isEmpty()) {
+            _requiredGrades.value = _requiredGrades.value + (subject.id to -2f)
             return -2f
         }
 
-        // Firebase Performance trace - Telemetria
-        val trace = FirebasePerformance.getInstance().newTrace("calcular_nota_necesaria")
+        val trace = FirebasePerformance.getInstance().newTrace("calculate_required_grade")
         trace.start()
 
-        val inicio = System.currentTimeMillis()
+        val startTime = System.currentTimeMillis()
 
-        val notaActual = materia.notas.sumOf { it.grade * (it.porcentaje / 100.0) }.toFloat()
-        val porcentajeUsado = materia.notas.sumOf { it.porcentaje }.toFloat()
-        val porcentajeRestante = 100f - porcentajeUsado
+        val currentGrade = subject.grades.sumOf {
+            it.value * (it.percentage / 100.0)
+        }.toFloat()
 
-        val resultado = if (porcentajeRestante <= 0f) {
-            // Ya se calificó todo — comparar promedio vs objetivo
-            if (notaActual >= materia.objetivo.toFloat()) 0f else notaActual
+        val usedPercentage = subject.grades.sumOf {
+            it.percentage
+        }.toFloat()
+
+        val remainingPercentage = 100f - usedPercentage
+
+        val result = if (remainingPercentage <= 0f) {
+            if (currentGrade >= subject.objective.toFloat()) {
+                0f
+            } else {
+                currentGrade
+            }
         } else {
-            val notaFaltante = (materia.objetivo.toFloat() - notaActual) / (porcentajeRestante / 100f)
-            notaFaltante.coerceIn(0f, 5f)
+            val missingGrade =
+                (subject.objective.toFloat() - currentGrade) / (remainingPercentage / 100f)
+
+            missingGrade.coerceIn(0f, 5f)
         }
 
-        val fin = System.currentTimeMillis()
-        val tiempoTranscurrido = fin - inicio
-        tiemposCalculo.add(tiempoTranscurrido)
+        val endTime = System.currentTimeMillis()
+        val elapsedTime = endTime - startTime
+        calculationTimes.add(elapsedTime)
 
-        trace.putAttribute("materia", materia.nombre.take(100))
-        trace.putMetric("tiempo_ms", tiempoTranscurrido)
-        trace.putMetric("supera_100ms", if (tiempoTranscurrido > 100L) 1L else 0L)
+        trace.putAttribute("subject", subject.name.take(100))
+        trace.putMetric("time_ms", elapsedTime)
+        trace.putMetric("exceeds_100ms", if (elapsedTime > 100L) 1L else 0L)
         trace.stop()
 
-        // Key por id, no por nombre, razon de por allá arriba
-        _notasNecesarias.value = _notasNecesarias.value + (materia.id to resultado)
+        _requiredGrades.value = _requiredGrades.value + (subject.id to result)
 
-        return resultado
+        return result
     }
 
-    fun obtenerPromedioTiempoCalculo(): Long {
-        if (tiemposCalculo.isEmpty()) return 0L
-        return tiemposCalculo.average().toLong()
+    fun getAverageCalculationTime(): Long {
+        if (calculationTimes.isEmpty()) return 0L
+        return calculationTimes.average().toLong()
     }
 
-    fun superaObjetivo100ms(): Boolean {
-        return obtenerPromedioTiempoCalculo() > 100L
+    fun exceeds100msObjective(): Boolean {
+        return getAverageCalculationTime() > 100L
     }
 }

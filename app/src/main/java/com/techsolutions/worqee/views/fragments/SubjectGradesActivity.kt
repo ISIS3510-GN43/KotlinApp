@@ -18,17 +18,20 @@ class SubjectGradesActivity : ComponentActivity() {
 
         PendingSyncManager.init(applicationContext)
 
-        val materiaId = intent.getStringExtra("materiaId")
-        val materiaNombre = intent.getStringExtra("materiaNombre")
+        val subjectId = intent.getStringExtra("subjectId")
+            ?: intent.getStringExtra("materiaId")
 
-        val materia = GradesRepository.findMateriaByIdOrName(
-            materiaId = materiaId,
-            materiaNombre = materiaNombre
+        val subjectName = intent.getStringExtra("subjectName")
+            ?: intent.getStringExtra("materiaNombre")
+
+        val subject = GradesRepository.findSubjectByIdOrName(
+            subjectId = subjectId,
+            subjectName = subjectName
         )
 
-        if (materia != null) {
+        if (subject != null) {
             val factory = SubjectGradesViewModelFactory(
-                materia = materia,
+                subject = subject,
                 context = applicationContext
             )
 

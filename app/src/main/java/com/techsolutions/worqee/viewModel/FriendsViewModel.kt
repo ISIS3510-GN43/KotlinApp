@@ -5,9 +5,9 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.techsolutions.worqee.models.clases.Dia
-import com.techsolutions.worqee.models.clases.Usuario
-import com.techsolutions.worqee.models.clases.daos.AmigoDao
+import com.techsolutions.worqee.models.clases.Day
+import com.techsolutions.worqee.models.clases.User
+import com.techsolutions.worqee.models.clases.daos.FriendDao
 import com.techsolutions.worqee.models.repository.FriendsRepository
 import com.techsolutions.worqee.models.repository.SessionRepository
 import com.techsolutions.worqee.models.storage.WorqeeDatabase
@@ -23,21 +23,21 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlin.math.sqrt
 
-data class EdificioUniversidad(
-    val nombre: String,
+data class UniversityBuilding(
+    val name: String,
     val lat: Double,
     val lng: Double
 )
 
 class FriendsViewModel(
-    private val amigoDao: AmigoDao
+    private val friendDao: FriendDao
 ) : ViewModel() {
 
     companion object {
         fun factory(context: Context): ViewModelProvider.Factory {
             return object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    val dao = WorqeeDatabase.getInstance(context).amigoDao()
+                    val dao = WorqeeDatabase.getInstance(context).friendDao()
 
                     @Suppress("UNCHECKED_CAST")
                     return FriendsViewModel(dao) as T
@@ -49,15 +49,15 @@ class FriendsViewModel(
     private val _uiState = MutableStateFlow(FriendsUiState())
     val uiState: StateFlow<FriendsUiState> = _uiState.asStateFlow()
 
-    private val edificios = listOf(
-        EdificioUniversidad("Edificio ML (Matemáticas)", 4.60178, -74.06582),
-        EdificioUniversidad("Edificio W (Ingeniería)", 4.60215, -74.06618),
-        EdificioUniversidad("Edificio SD (Santo Domingo)", 4.60143, -74.06601),
-        EdificioUniversidad("Biblioteca General", 4.60165, -74.06555),
-        EdificioUniversidad("Edificio RGA", 4.60190, -74.06540),
-        EdificioUniversidad("Centro Deportivo Uniandes", 4.60250, -74.06490),
-        EdificioUniversidad("Edificio AU (Artes)", 4.60120, -74.06570),
-        EdificioUniversidad("Edificio C (Ciencias)", 4.60200, -74.06650)
+    private val buildings = listOf(
+        UniversityBuilding("Edificio ML (Matemáticas)", 4.60178, -74.06582),
+        UniversityBuilding("Edificio W (Ingeniería)", 4.60215, -74.06618),
+        UniversityBuilding("Edificio SD (Santo Domingo)", 4.60143, -74.06601),
+        UniversityBuilding("Biblioteca General", 4.60165, -74.06555),
+        UniversityBuilding("Edificio RGA", 4.60190, -74.06540),
+        UniversityBuilding("Centro Deportivo Uniandes", 4.60250, -74.06490),
+        UniversityBuilding("Edificio AU (Artes)", 4.60120, -74.06570),
+        UniversityBuilding("Edificio C (Ciencias)", 4.60200, -74.06650)
     )
 
     init {
@@ -66,69 +66,63 @@ class FriendsViewModel(
 
     private fun loadFriends() {
         viewModelScope.launch {
-            val usuario = SessionRepository.getCurrentUser() ?: return@launch
+            val user = SessionRepository.getCurrentUser() ?: return@launch
 
-            val result = FriendsRepository.getAmigos(
-                userId = usuario.id,
-                amigoDao = amigoDao
+            val result = FriendsRepository.getFriends(
+                userId = user.id,
+                friendDao = friendDao
             )
 
             if (result.isFailure) {
                 Log.e(
                     "FriendsViewModel",
-                    "Error cargando amigos: ${result.exceptionOrNull()?.message}"
+                    "Error loading friends: ${result.exceptionOrNull()?.message}"
                 )
                 return@launch
             }
 
-            val (amigos, isOffline) = result.getOrThrow()
-            val allFriends = construirFriendUiModels(amigos)
+            val (friends, isOffline) = result.getOrThrow()
+            val allFriends = buildFriendUiModels(friends)
 
             _uiState.value = _uiState.value.copy(isOffline = isOffline)
             updateState(allFriends, _uiState.value.searchQuery)
         }
     }
 
-    private fun construirFriendUiModels(amigos: List<Usuario>): List<FriendUiModel> {
-        val ahora = java.util.Calendar.getInstance()
+    private fun buildFriendUiModels(friends: List<User>): List<FriendUiModel> {
+        val now = java.util.Calendar.getInstance()
 
-        val diaActual = when (ahora.get(java.util.Calendar.DAY_OF_WEEK)) {
-            java.util.Calendar.MONDAY -> Dia.LUNES
-            java.util.Calendar.TUESDAY -> Dia.MARTES
-            java.util.Calendar.WEDNESDAY -> Dia.MIERCOLES
-            java.util.Calendar.THURSDAY -> Dia.JUEVES
-            java.util.Calendar.FRIDAY -> Dia.VIERNES
+        val currentDay = when (now.get(java.util.Calendar.DAY_OF_WEEK)) {
+            java.util.Calendar.MONDAY -> Day.MONDAY
+            java.util.Calendar.TUESDAY -> Day.TUESDAY
+            java.util.Calendar.WEDNESDAY -> Day.WEDNESDAY
+            java.util.Calendar.THURSDAY -> Day.THURSDAY
+            java.util.Calendar.FRIDAY -> Day.FRIDAY
             else -> null
         }
 
-        val horaActual = ahora.get(java.util.Calendar.HOUR_OF_DAY) * 100 +
-                ahora.get(java.util.Calendar.MINUTE)
+        val currentTime = now.get(java.util.Calendar.HOUR_OF_DAY) * 100 +
+                now.get(java.util.Calendar.MINUTE)
 
-        return amigos.mapIndexed { index, amigo ->
-            val horarioActivo = amigo.horarios.firstOrNull { it.activo }
-                ?: amigo.horarios.firstOrNull()
+        return friends.mapIndexed { index, friend ->
+            val activeSchedule = friend.schedules.firstOrNull { it.isActive }
+                ?: friend.schedules.firstOrNull()
 
             val status = when {
-                horarioActivo == null -> {
-                    FriendStatus.AVAILABLE
-                }
-
-                diaActual == null -> {
-                    FriendStatus.AVAILABLE
-                }
-
+                activeSchedule == null -> FriendStatus.AVAILABLE
+                currentDay == null -> FriendStatus.AVAILABLE
                 else -> {
-                    val estaOcupado = horarioActivo.materias.any { materia ->
-                        materia.dias.indices.any { i ->
-                            val dia = materia.dias.getOrNull(i)
-                            val inicio = materia.horaInicio.getOrElse(i) { 0 }
-                            val fin = materia.horaFin.getOrElse(i) { 0 }
+                    val isBusy = activeSchedule.subjects.any { subject ->
+                        subject.days.indices.any { i ->
+                            val day = subject.days.getOrNull(i)
+                            val start = subject.startHours.getOrElse(i) { 0 }
+                            val end = subject.endHours.getOrElse(i) { 0 }
 
-                            dia == diaActual && horaActual in inicio until fin
+                            day == currentDay && currentTime in start until end
                         }
                     }
 
-                    if (estaOcupado) {
+                    if (isBusy) {
                         FriendStatus.BUSY
                     } else {
                         FriendStatus.AVAILABLE
@@ -137,33 +131,33 @@ class FriendsViewModel(
             }
 
             val freeAtLabel = if (status == FriendStatus.BUSY) {
-                val proximaLibre = horarioActivo?.materias
-                    ?.flatMap { materia ->
-                        materia.dias.indices.map { i ->
-                            val dia = materia.dias.getOrNull(i)
-                            val fin = materia.horaFin.getOrElse(i) { 0 }
-                            Pair(dia, fin)
+                val nextFreeTime = activeSchedule?.subjects
+                    ?.flatMap { subject ->
+                        subject.days.indices.map { i ->
+                            val day = subject.days.getOrNull(i)
+                            val end = subject.endHours.getOrElse(i) { 0 }
+                            Pair(day, end)
                         }
                     }
-                    ?.filter { (dia, fin) ->
-                        dia == diaActual && fin > horaActual
+                    ?.filter { (day, end) ->
+                        day == currentDay && end > currentTime
                     }
                     ?.minByOrNull { it.second }
                     ?.second
 
-                if (proximaLibre != null) {
-                    "Free at ${formatHora(proximaLibre)}"
+                if (nextFreeTime != null) {
+                    "Libre a las ${formatTime(nextFreeTime)}"
                 } else {
-                    "Busy"
+                    "Ocupado"
                 }
             } else {
                 null
             }
 
             FriendUiModel(
-                id = amigo.id,
-                name = amigo.username,
-                avatarUrl = amigo.foto,
+                id = friend.id,
+                name = friend.username,
+                avatarUrl = friend.photo,
                 status = status,
                 freeAtLabel = freeAtLabel,
                 lat = 4.6097 + (index * 0.01),
@@ -178,7 +172,7 @@ class FriendsViewModel(
     }
 
     fun onMessageFriend(friendId: String) {
-        // TODO: abrir chat con el amigo
+        // TODO: open chat with this friend
     }
 
     private fun getAllFriends(): List<FriendUiModel> {
@@ -215,65 +209,65 @@ class FriendsViewModel(
         )
     }
 
-    fun construirUrlEdificioMasCercano(
-        miLat: Double,
-        miLng: Double
+    fun buildNearestBuildingUrl(
+        myLat: Double,
+        myLng: Double
     ): Pair<String, String> {
-        val edificioCercano = edificios.minByOrNull { edificio ->
-            val dLat = edificio.lat - miLat
-            val dLng = edificio.lng - miLng
+        val nearestBuilding = buildings.minByOrNull { building ->
+            val dLat = building.lat - myLat
+            val dLng = building.lng - myLng
 
             sqrt(dLat * dLat + dLng * dLng)
-        } ?: edificios.first()
+        } ?: buildings.first()
 
         val url = "https://www.google.com/maps/dir/?api=1" +
-                "&origin=$miLat,$miLng" +
-                "&destination=${edificioCercano.lat},${edificioCercano.lng}" +
+                "&origin=$myLat,$myLng" +
+                "&destination=${nearestBuilding.lat},${nearestBuilding.lng}" +
                 "&travelmode=walking"
 
-        return Pair(url, edificioCercano.nombre)
+        return Pair(url, nearestBuilding.name)
     }
 
     fun onFindCommonFreeTime() {
         viewModelScope.launch {
-            val usuario = SessionRepository.getCurrentUser() ?: return@launch
+            val user = SessionRepository.getCurrentUser() ?: return@launch
 
-            val result = FriendsRepository.getAmigos(
-                userId = usuario.id,
-                amigoDao = amigoDao
+            val result = FriendsRepository.getFriends(
+                userId = user.id,
+                friendDao = friendDao
             )
 
             if (result.isFailure) {
                 Log.e(
                     "FriendsViewModel",
-                    "Error buscando hueco común: ${result.exceptionOrNull()?.message}"
+                    "Error finding common free time: ${result.exceptionOrNull()?.message}"
                 )
                 return@launch
             }
 
-            val (amigos, _) = result.getOrThrow()
+            val (friends, _) = result.getOrThrow()
 
-            data class Bloque(
-                val dia: Dia,
-                val inicio: Int,
-                val fin: Int
+            data class BusyBlock(
+                val day: Day,
+                val start: Int,
+                val end: Int
             )
 
-            val bloquesOcupados = amigos.flatMap { amigo ->
-                val horarioActivo = amigo.horarios.firstOrNull { it.activo }
-                    ?: amigo.horarios.firstOrNull()
+            val busyBlocks = friends.flatMap { friend ->
+                val activeSchedule = friend.schedules.firstOrNull { it.isActive }
+                    ?: friend.schedules.firstOrNull()
 
-                horarioActivo?.materias?.flatMap { materia ->
-                    materia.dias.indices.mapNotNull { i ->
-                        val dia = materia.dias.getOrNull(i)
-                        val inicio = materia.horaInicio.getOrElse(i) { 0 }
-                        val fin = materia.horaFin.getOrElse(i) { 0 }
+                activeSchedule?.subjects?.flatMap { subject ->
+                    subject.days.indices.mapNotNull { i ->
+                        val day = subject.days.getOrNull(i)
+                        val start = subject.startHours.getOrElse(i) { 0 }
+                        val end = subject.endHours.getOrElse(i) { 0 }
 
-                        if (dia != null) {
-                            Bloque(
-                                dia = dia,
-                                inicio = inicio,
-                                fin = fin
+                        if (day != null) {
+                            BusyBlock(
+                                day = day,
+                                start = start,
+                                end = end
                             )
                         } else {
                             null
@@ -282,54 +276,54 @@ class FriendsViewModel(
                 } ?: emptyList()
             }
 
-            Log.i("Bloques", "$bloquesOcupados")
+            Log.i("BusyBlocks", "$busyBlocks")
 
-            val diasSemana = listOf(
-                Dia.LUNES,
-                Dia.MARTES,
-                Dia.MIERCOLES,
-                Dia.JUEVES,
-                Dia.VIERNES
+            val weekDays = listOf(
+                Day.MONDAY,
+                Day.TUESDAY,
+                Day.WEDNESDAY,
+                Day.THURSDAY,
+                Day.FRIDAY
             )
 
-            val franjas = (800..2000 step 100).flatMap { hora ->
-                diasSemana.map { dia ->
-                    val ocupados = bloquesOcupados.count { bloque ->
-                        bloque.dia == dia &&
-                                bloque.inicio <= hora &&
-                                bloque.fin > hora
+            val timeSlots = (800..2000 step 100).flatMap { time ->
+                weekDays.map { day ->
+                    val busyCount = busyBlocks.count { block ->
+                        block.day == day &&
+                                block.start <= time &&
+                                block.end > time
                     }
 
                     Triple(
-                        first = dia,
-                        second = hora,
-                        third = amigos.size - ocupados
+                        first = day,
+                        second = time,
+                        third = friends.size - busyCount
                     )
                 }
             }
 
-            val mejorHueco = franjas.maxByOrNull { it.third }
+            val bestSlot = timeSlots.maxByOrNull { it.third }
 
-            if (mejorHueco != null) {
+            if (bestSlot != null) {
                 _uiState.value = _uiState.value.copy(
                     commonFreeTimeResult =
-                        "Best time: ${mejorHueco.first} at ${formatHora(mejorHueco.second)} — ${mejorHueco.third}/${amigos.size} friends free"
+                        "Mejor hora: ${bestSlot.first.toSpanishName()} a las ${formatTime(bestSlot.second)} — ${bestSlot.third}/${friends.size} amigos libres"
                 )
             }
         }
     }
 
-    private fun formatHora(hora: Int): String {
-        val h = hora / 100
-        val suffix = if (h >= 12) "PM" else "AM"
+    private fun formatTime(time: Int): String {
+        val hour = time / 100
+        val suffix = if (hour >= 12) "PM" else "AM"
 
-        val h12 = when {
-            h == 0 -> 12
-            h > 12 -> h - 12
-            else -> h
+        val hour12 = when {
+            hour == 0 -> 12
+            hour > 12 -> hour - 12
+            else -> hour
         }
 
-        return "%02d:00 %s".format(h12, suffix)
+        return "%02d:00 %s".format(hour12, suffix)
     }
 
     fun onOpenAddFriendDialog() {
@@ -370,18 +364,18 @@ class FriendsViewModel(
                 addFriendSearchStatus = AddFriendSearchStatus.LOADING
             )
 
-            val result = FriendsRepository.buscarUsuarioPorUsername(username)
+            val result = FriendsRepository.searchUserByUsername(username)
 
             if (result.isSuccess) {
-                val usuario = result.getOrNull()
+                val user = result.getOrNull()
 
-                if (usuario != null) {
+                if (user != null) {
                     _uiState.value = _uiState.value.copy(
                         addFriendSearchStatus = AddFriendSearchStatus.SUCCESS,
                         foundUser = FoundUserUiModel(
-                            uid = usuario.id,
-                            username = usuario.username,
-                            foto = usuario.foto
+                            uid = user.id,
+                            username = user.username,
+                            photo = user.photo
                         )
                     )
                 } else {
@@ -405,24 +399,24 @@ class FriendsViewModel(
                 sendRequestStatus = SendRequestStatus.LOADING
             )
 
-            val usuarioActual = SessionRepository.getCurrentUser()
+            val currentUser = SessionRepository.getCurrentUser()
 
-            if (usuarioActual == null) {
+            if (currentUser == null) {
                 _uiState.value = _uiState.value.copy(
                     sendRequestStatus = SendRequestStatus.ERROR
                 )
                 return@launch
             }
 
-            val result = FriendsRepository.enviarSolicitudAmistad(
-                fromId = usuarioActual.id,
+            val result = FriendsRepository.sendFriendRequest(
+                fromId = currentUser.id,
                 toId = foundUser.uid
             )
 
             Log.d("API_RESULT", result.toString())
 
             if (result.isSuccess) {
-                FriendsRepository.registrarMetricaSolicitud(usuarioActual.id)
+                FriendsRepository.registerRequestMetric(currentUser.id)
 
                 _uiState.value = _uiState.value.copy(
                     sendRequestStatus = SendRequestStatus.SUCCESS

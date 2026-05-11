@@ -1,8 +1,8 @@
 package com.techsolutions.worqee.viewModel
 
 import androidx.lifecycle.ViewModel
-import com.techsolutions.worqee.models.clases.Dia
-import com.techsolutions.worqee.models.clases.Usuario
+import com.techsolutions.worqee.models.clases.Day
+import com.techsolutions.worqee.models.clases.User
 import com.techsolutions.worqee.views.states.ScheduleUiState
 import com.techsolutions.worqee.views.states.ScheduleViewMode
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,41 +19,43 @@ class ScheduleViewModel : ViewModel() {
     }
 
     fun loadSchedule() {
-        //  Acceso al singleton — si aún no está listo, salimos sin crashear
-        val usuario = try {
-            Usuario.getInstance()
+        val user = try {
+            User.getInstance()
         } catch (e: IllegalStateException) {
             return
         }
 
-        val horarioActivo = usuario.horarios.firstOrNull { it.activo }
-            ?: usuario.horarios.firstOrNull()
+        val activeSchedule = user.schedules.firstOrNull { it.isActive }
+            ?: user.schedules.firstOrNull()
 
-        val materias = horarioActivo?.materias ?: emptyList()
-        val diasDisponibles = materias
-            .flatMap { it.dias }
+        val subjects = activeSchedule?.subjects ?: emptyList()
+
+        val availableDays = subjects
+            .flatMap { it.days }
             .distinct()
             .sortedBy { it.ordinal }
 
         _uiState.value = ScheduleUiState(
-            titulo = horarioActivo?.titulo ?: "My Schedule",
-            allMaterias = materias,
-            availableDays = diasDisponibles,
-            selectedDay = diasDisponibles.firstOrNull(),
+            title = activeSchedule?.title ?: "Mi horario",
+            allSubjects = subjects,
+            availableDays = availableDays,
+            selectedDay = availableDays.firstOrNull(),
             viewMode = ScheduleViewMode.DAY
         )
     }
-
-    fun onDaySelected(day: Dia) {
-        _uiState.value = _uiState.value.copy(selectedDay = day)
+    fun onDaySelected(day: Day) {
+        _uiState.value = _uiState.value.copy(
+            selectedDay = day
+        )
     }
 
     fun toggleViewMode() {
-        val newMode = if (_uiState.value.viewMode == ScheduleViewMode.DAY) {
-            ScheduleViewMode.WEEK
-        } else {
-            ScheduleViewMode.DAY
-        }
-        _uiState.value = _uiState.value.copy(viewMode = newMode)
+        _uiState.value = _uiState.value.copy(
+            viewMode = if (_uiState.value.viewMode == ScheduleViewMode.DAY) {
+                ScheduleViewMode.WEEK
+            } else {
+                ScheduleViewMode.DAY
+            }
+        )
     }
 }
