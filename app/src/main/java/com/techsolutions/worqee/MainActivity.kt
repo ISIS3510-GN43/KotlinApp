@@ -14,6 +14,8 @@ import com.techsolutions.worqee.views.fragments.GradesFragment
 import com.techsolutions.worqee.views.fragments.LoginFragment
 import com.techsolutions.worqee.views.fragments.ScheduleFragment
 import kotlinx.coroutines.launch
+import androidx.fragment.app.FragmentManager
+import com.techsolutions.worqee.models.repository.SessionRepository
 
 class MainActivity : AppCompatActivity() {
 
@@ -67,5 +69,17 @@ class MainActivity : AppCompatActivity() {
             .replace(R.id.fragment_container, GradesFragment())
             .addToBackStack(null)
             .commit()
+    }
+    fun logout() {
+        lifecycleScope.launch {
+            SessionRepository.clearSession()
+
+            supportFragmentManager.popBackStack(
+                null,
+                FragmentManager.POP_BACK_STACK_INCLUSIVE
+            )
+
+            showLogin()
+        }
     }
 }

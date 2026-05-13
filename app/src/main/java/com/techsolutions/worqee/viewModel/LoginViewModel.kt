@@ -30,7 +30,7 @@ class LoginViewModel : ViewModel() {
         if (_uiState.value is LoginUiState.Lockout) return
 
         if (email.isBlank() || password.isBlank()) {
-            _uiState.value = LoginUiState.Error("Por favor completa todos los campos")
+            _uiState.value = LoginUiState.Error("Completa el correo y la contraseña")
             return
         }
 
@@ -43,7 +43,9 @@ class LoginViewModel : ViewModel() {
                 failedAttempts = 0
                 _uiState.value = LoginUiState.Success
             } else {
-                registerFailedAttempt(mapLoginError(result.exceptionOrNull()))
+                registerFailedAttempt(
+                    result.exceptionOrNull()?.message ?: "Error al iniciar sesión"
+                )
             }
         }
     }
@@ -55,7 +57,7 @@ class LoginViewModel : ViewModel() {
         birthday: String
     ) {
         if (email.isBlank() || password.isBlank() || username.isBlank() || birthday.isBlank()) {
-            _uiState.value = LoginUiState.Error("Por favor completa todos los campos")
+            _uiState.value = LoginUiState.Error("Completa todos los campos")
             return
         }
 
@@ -69,14 +71,19 @@ class LoginViewModel : ViewModel() {
                 birthday = birthday
             )
 
-            _uiState.value =
-                if (result.isSuccess) {
-                    LoginUiState.Success
-                } else {
-                    LoginUiState.Error(
-                        result.exceptionOrNull()?.message ?: "Error al registrarse"
-                    )
-                }
+            _uiState.value = if (result.isSuccess) {
+                LoginUiState.Success
+            } else {
+                LoginUiState.Error(
+                    result.exceptionOrNull()?.message ?: "Error al registrarse"
+                )
+            }
+        }
+    }
+
+    fun resetState() {
+        if (_uiState.value !is LoginUiState.Lockout) {
+            _uiState.value = LoginUiState.Idle
         }
     }
 
@@ -87,8 +94,10 @@ class LoginViewModel : ViewModel() {
             startLockout()
         } else {
             val remainingAttempts = lockoutMaxAttempts - failedAttempts
-            _uiState.value =
-                LoginUiState.Error("$message. Te quedan $remainingAttempts intento(s).")
+
+            _uiState.value = LoginUiState.Error(
+                "$message. Te quedan $remainingAttempts intento(s)."
+            )
         }
     }
 
@@ -100,23 +109,6 @@ class LoginViewModel : ViewModel() {
             }
 
             failedAttempts = 0
-            _uiState.value = LoginUiState.Idle
-        }
-    }
-
-    private fun mapLoginError(error: Throwable?): String {
-        val message = error?.message.orEmpty()
-
-        return when {
-            message.contains("password", ignoreCase = true) -> "Contraseña incorrecta"
-            message.contains("email", ignoreCase = true) -> "Correo no registrado"
-            message.contains("network", ignoreCase = true) -> "Sin conexión a internet"
-            else -> "Error al iniciar sesión"
-        }
-    }
-
-    fun resetState() {
-        if (_uiState.value !is LoginUiState.Lockout) {
             _uiState.value = LoginUiState.Idle
         }
     }

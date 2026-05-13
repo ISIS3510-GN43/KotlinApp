@@ -98,9 +98,7 @@ dependencies {
 
     implementation("androidx.appcompat:appcompat:1.7.0")
 
-    //GPS:
     implementation("com.google.android.gms:play-services-location:21.0.1")
-
     // Room
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")

@@ -1,23 +1,33 @@
 package com.techsolutions.worqee.models.clases
 
+import com.google.gson.annotations.SerializedName
+
 class User(
     var id: String = "",
+    @SerializedName("gmail")
     var email: String = "",
     var username: String = "",
     var password: String = "",
+    @SerializedName("cumpleanios")
     var birthday: String = "",
+    @SerializedName("amigosIds")
     var friendsIds: MutableList<String> = mutableListOf(),
+    @SerializedName("amigosUsernames")
     var friendsUsernames: MutableList<String> = mutableListOf(),
+    @SerializedName("horarios")
     var schedules: MutableList<Schedule> = mutableListOf(),
+    @SerializedName("solicitudes")
     var requests: MutableList<String> = mutableListOf(),
+    @SerializedName("eventos")
     var events: MutableList<Any?> = mutableListOf(),
+    @SerializedName("foto")
     var photo: String = ""
 ) {
 
     fun toJson(): Map<String, Any?> {
         return mapOf(
             "id" to id,
-            "gmail" to email,
+            "email" to email,
             "username" to username,
             "password" to password,
             "cumpleanios" to birthday,
@@ -63,7 +73,9 @@ class User(
         fun fromMap(map: Map<String, Any?>): User {
             return User(
                 id = map["id"] as? String ?: "",
-                email = map["gmail"] as? String ?: "",
+                email =
+                     map["gmail"] as? String
+                    ?: "",
                 username = map["username"] as? String ?: "",
                 password = map["password"] as? String ?: "",
                 birthday = map["cumpleanios"] as? String ?: "",
