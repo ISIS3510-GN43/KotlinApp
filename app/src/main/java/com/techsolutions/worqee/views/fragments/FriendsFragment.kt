@@ -25,6 +25,9 @@ class FriendsFragment : Fragment() {
                     },
                     onNavigateToSchedule = {
                         (activity as? MainActivity)?.showSchedule()
+                    },
+                    onLogout = {
+                        (activity as? MainActivity)?.logout()
                     }
                 )
             }

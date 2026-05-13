@@ -1,7 +1,6 @@
 package com.techsolutions.worqee.views.screens
 
 import android.app.DatePickerDialog
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -10,7 +9,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -32,7 +33,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -40,6 +40,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.techsolutions.worqee.utils.RegisterValidator
 import com.techsolutions.worqee.viewModel.LoginUiState
 import com.techsolutions.worqee.viewModel.LoginViewModel
 import java.util.Calendar
@@ -60,9 +61,13 @@ fun LoginScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
 
+    var usernameError by remember { mutableStateOf<String?>(null) }
+    var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
     var confirmPasswordError by remember { mutableStateOf<String?>(null) }
+    var birthdayError by remember { mutableStateOf<String?>(null) }
 
+    var globalError by remember { mutableStateOf<String?>(null) }
     var isRegisterMode by remember { mutableStateOf(false) }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -72,16 +77,14 @@ fun LoginScreen(
             is LoginUiState.Success -> onLoginSuccess()
 
             is LoginUiState.Error -> {
-                Toast.makeText(
-                    context,
-                    (uiState as LoginUiState.Error).message,
-                    Toast.LENGTH_SHORT
-                ).show()
-
-                viewModel.resetState()
+                globalError = (uiState as LoginUiState.Error).message
             }
 
-            else -> Unit
+            else -> {
+                if (uiState !is LoginUiState.Error) {
+                    globalError = null
+                }
+            }
         }
     }
 
@@ -91,6 +94,7 @@ fun LoginScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -119,7 +123,7 @@ fun LoginScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.Red.copy(alpha = 0.1f)
+                    containerColor = MaterialTheme.colorScheme.errorContainer
                 )
             ) {
                 Column(
@@ -130,17 +134,35 @@ fun LoginScreen(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = "🔒 Demasiados intentos fallidos",
+                        text = "Demasiados intentos fallidos",
                         style = MaterialTheme.typography.titleSmall,
-                        color = Color.Red
+                        color = MaterialTheme.colorScheme.onErrorContainer
                     )
 
                     Text(
                         text = "Intenta de nuevo en $remainingSeconds segundo${if (remainingSeconds != 1) "s" else ""}",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Red
+                        color = MaterialTheme.colorScheme.onErrorContainer
                     )
                 }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        globalError?.let { message ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                )
+            ) {
+                Text(
+                    text = message,
+                    modifier = Modifier.padding(12.dp),
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -149,8 +171,21 @@ fun LoginScreen(
         if (isRegisterMode) {
             OutlinedTextField(
                 value = username,
-                onValueChange = { username = it },
+                onValueChange = {
+                    username = it
+                    usernameError = null
+                    globalError = null
+                },
                 label = { Text("Nombre de usuario") },
+                isError = usernameError != null,
+                supportingText = usernameError?.let { message ->
+                    {
+                        Text(
+                            text = message,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 enabled = !isLocked
@@ -162,6 +197,15 @@ fun LoginScreen(
                 value = birthday,
                 onValueChange = {},
                 label = { Text("Fecha de nacimiento") },
+                isError = birthdayError != null,
+                supportingText = birthdayError?.let { message ->
+                    {
+                        Text(
+                            text = message,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                },
                 modifier = Modifier.fillMaxWidth(),
                 readOnly = true,
                 singleLine = true,
@@ -170,18 +214,24 @@ fun LoginScreen(
                     IconButton(
                         onClick = {
                             if (!isLocked) {
-                                val calendar = Calendar.getInstance()
+                                val maxCalendar = Calendar.getInstance().apply {
+                                    add(Calendar.YEAR, -RegisterValidator.MINIMUM_AGE)
+                                }
 
                                 DatePickerDialog(
                                     context,
                                     { _, year, month, day ->
                                         birthday =
                                             "$year-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}"
+                                        birthdayError = null
+                                        globalError = null
                                     },
-                                    calendar.get(Calendar.YEAR),
-                                    calendar.get(Calendar.MONTH),
-                                    calendar.get(Calendar.DAY_OF_MONTH)
-                                ).show()
+                                    maxCalendar.get(Calendar.YEAR),
+                                    maxCalendar.get(Calendar.MONTH),
+                                    maxCalendar.get(Calendar.DAY_OF_MONTH)
+                                ).apply {
+                                    datePicker.maxDate = maxCalendar.timeInMillis
+                                }.show()
                             }
                         }
                     ) {
@@ -195,9 +245,22 @@ fun LoginScreen(
 
         OutlinedTextField(
             value = email,
-            onValueChange = { email = it },
+            onValueChange = {
+                email = it
+                emailError = null
+                globalError = null
+            },
             label = { Text("Correo electrónico") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            isError = emailError != null,
+            supportingText = emailError?.let { message ->
+                {
+                    Text(
+                        text = message,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             enabled = !isLocked
@@ -210,6 +273,7 @@ fun LoginScreen(
             onValueChange = {
                 password = it
                 passwordError = null
+                globalError = null
             },
             label = { Text("Contraseña") },
             visualTransformation = if (passwordVisible) {
@@ -218,18 +282,18 @@ fun LoginScreen(
                 PasswordVisualTransformation()
             },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            enabled = !isLocked,
             isError = passwordError != null,
-            supportingText = passwordError?.let {
+            supportingText = passwordError?.let { message ->
                 {
                     Text(
-                        text = it,
+                        text = message,
                         color = MaterialTheme.colorScheme.error
                     )
                 }
             },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            enabled = !isLocked,
             trailingIcon = {
                 IconButton(
                     onClick = {
@@ -260,6 +324,7 @@ fun LoginScreen(
                 onValueChange = {
                     confirmPassword = it
                     confirmPasswordError = null
+                    globalError = null
                 },
                 label = { Text("Confirmar contraseña") },
                 visualTransformation = if (confirmPasswordVisible) {
@@ -268,18 +333,18 @@ fun LoginScreen(
                     PasswordVisualTransformation()
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                enabled = !isLocked,
                 isError = confirmPasswordError != null,
-                supportingText = confirmPasswordError?.let {
+                supportingText = confirmPasswordError?.let { message ->
                     {
                         Text(
-                            text = it,
+                            text = message,
                             color = MaterialTheme.colorScheme.error
                         )
                     }
                 },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                enabled = !isLocked,
                 trailingIcon = {
                     IconButton(
                         onClick = {
@@ -307,21 +372,24 @@ fun LoginScreen(
 
         Button(
             onClick = {
+                globalError = null
+
                 if (isRegisterMode) {
-                    val hasSpecialCharacter = password.any { !it.isLetterOrDigit() }
-                    var hasError = false
+                    val errors = RegisterValidator.validate(
+                        username = username,
+                        email = email,
+                        password = password,
+                        confirmPassword = confirmPassword,
+                        birthday = birthday
+                    )
 
-                    if (password.length < 8 || !hasSpecialCharacter) {
-                        passwordError = "Mínimo 8 caracteres y un carácter especial"
-                        hasError = true
-                    }
+                    usernameError = errors.usernameError
+                    emailError = errors.emailError
+                    passwordError = errors.passwordError
+                    confirmPasswordError = errors.confirmPasswordError
+                    birthdayError = errors.birthdayError
 
-                    if (password != confirmPassword) {
-                        confirmPasswordError = "Las contraseñas no coinciden"
-                        hasError = true
-                    }
-
-                    if (!hasError) {
+                    if (!errors.hasErrors) {
                         viewModel.register(
                             email = email,
                             password = password,
@@ -373,8 +441,12 @@ fun LoginScreen(
                 username = ""
                 birthday = ""
 
+                usernameError = null
+                emailError = null
                 passwordError = null
                 confirmPasswordError = null
+                birthdayError = null
+                globalError = null
 
                 passwordVisible = false
                 confirmPasswordVisible = false

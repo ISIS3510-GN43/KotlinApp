@@ -51,6 +51,7 @@ import com.techsolutions.worqee.models.storage.FriendAvatarLoader
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.material.icons.outlined.WifiOff
 import androidx.compose.material.icons.outlined.Refresh
+import com.techsolutions.worqee.views.components.Logout
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,6 +59,7 @@ import androidx.compose.material.icons.outlined.Refresh
 fun FriendsScreen(
     onNavigateToGrades: () -> Unit = {},
     onNavigateToSchedule: () -> Unit = {},
+    onLogout: () -> Unit = {},
     viewModel: FriendsViewModel = viewModel(
         factory = FriendsViewModel.factory(LocalContext.current)
     )
@@ -67,7 +69,7 @@ fun FriendsScreen(
     val allFriends = uiState.availableFriends + uiState.busyFriends + uiState.offlineFriends
 
 
-    // permiso GPS
+
     val locationLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
@@ -112,9 +114,11 @@ fun FriendsScreen(
                     IconButton(onClick = { viewModel.refresh() }) {
                         Icon(
                             imageVector = Icons.Outlined.Refresh,
-                            contentDescription = "Refresh"
+                            contentDescription = "Actualizar"
                         )
                     }
+
+                    Logout(onLogout = onLogout)
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface

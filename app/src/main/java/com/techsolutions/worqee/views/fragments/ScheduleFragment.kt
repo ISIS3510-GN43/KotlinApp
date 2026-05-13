@@ -11,6 +11,7 @@ import com.techsolutions.worqee.views.screens.ScheduleScreen
 import com.techsolutions.worqee.views.theme.WorqeeTheme
 
 class ScheduleFragment : Fragment() {
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -20,10 +21,13 @@ class ScheduleFragment : Fragment() {
             WorqeeTheme {
                 ScheduleScreen(
                     onLogout = {
-                        (activity as? MainActivity)?.showLogin()
+                        (activity as? MainActivity)?.logout()
                     },
                     onNavigateToFriends = {
                         (activity as? MainActivity)?.showFriends()
+                    },
+                    onNavigateToGrades = {
+                        (activity as? MainActivity)?.showGrades()
                     }
                 )
             }
